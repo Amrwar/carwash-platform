@@ -304,7 +304,7 @@ export default function WorkersPage() {
                   {t("workers.adding")}
                 </>
               ) : (
-                {t("workers.addWorker")}
+                t("workers.addWorker")
               )}
             </button>
           </div>
