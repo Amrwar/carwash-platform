@@ -199,7 +199,7 @@ export default function DashboardPage() {
           </h1>
           <div className="flex items-center gap-2 mt-1">
             <button onClick={() => navigateDate("prev")} className="p-1 hover:bg-gray-100 rounded">
-              <ChevronLeft className="w-5 h-5 text-gray-500" />
+              <ChevronLeft className="w-5 h-5 text-gray-500 rtl:rotate-180" />
             </button>
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-gray-400" />
@@ -211,7 +211,7 @@ export default function DashboardPage() {
               />
             </div>
             <button onClick={() => navigateDate("next")} className="p-1 hover:bg-gray-100 rounded">
-              <ChevronRight className="w-5 h-5 text-gray-500" />
+              <ChevronRight className="w-5 h-5 text-gray-500 rtl:rotate-180" />
             </button>
             {!isToday && (
               <button onClick={goToToday} className="text-sm text-primary-600 hover:text-primary-700 font-medium ms-2">{t("dashboard.goToToday")}</button>
@@ -229,9 +229,9 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatsCard title={t("dashboard.totalCars")} value={stats.total} subtitle={`${stats.inProgress} in progress · ${stats.finished} finished · ${stats.cancelled} cancelled`} icon={Car} color="blue" />
+        <StatsCard title={t("dashboard.totalCars")} value={stats.total} subtitle={`${stats.inProgress} ${t("dashboard.inProgress")} · ${stats.finished} ${t("dashboard.finished")} · ${stats.cancelled} ${t("dashboard.cancelled")}`} icon={Car} color="blue" />
         <StatsCard title={t("dashboard.totalRevenue")} value={`${stats.revenue} ${t("common.egp")}`} icon={DollarSign} color="purple" />
-        <StatsCard title={t("dashboard.received")} value={`${stats.cashReceived + stats.instapayReceived} ${t("common.egp")}`} subtitle={`Cash ${stats.cashReceived} · InstaPay ${stats.instapayReceived}`} icon={Banknote} color="green" />
+        <StatsCard title={t("dashboard.received")} value={`${stats.cashReceived + stats.instapayReceived} ${t("common.egp")}`} subtitle={`${t("dashboard.cash")} ${stats.cashReceived} · ${t("dashboard.instapay")} ${stats.instapayReceived}`} icon={Banknote} color="green" />
         <StatsCard title={t("dashboard.unreceived")} value={`${stats.revenue - stats.cashReceived - stats.instapayReceived} ${t("common.egp")}`} icon={CreditCard} color="red" />
       </div>
 

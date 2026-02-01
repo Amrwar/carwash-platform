@@ -136,7 +136,7 @@ export default function MechanicPage() {
           </h1>
           <div className="flex items-center gap-2 mt-1">
             <button onClick={() => navigateDate("prev")} className="p-1 hover:bg-gray-100 rounded">
-              <ChevronLeft className="w-5 h-5 text-gray-500" />
+              <ChevronLeft className="w-5 h-5 text-gray-500 rtl:rotate-180" />
             </button>
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-gray-400" />
@@ -148,7 +148,7 @@ export default function MechanicPage() {
               />
             </div>
             <button onClick={() => navigateDate("next")} className="p-1 hover:bg-gray-100 rounded">
-              <ChevronRight className="w-5 h-5 text-gray-500" />
+              <ChevronRight className="w-5 h-5 text-gray-500 rtl:rotate-180" />
             </button>
             {!isToday && (
               <button

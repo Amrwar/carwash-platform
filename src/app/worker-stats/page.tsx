@@ -299,7 +299,7 @@ export default function WorkerStatsPage() {
                   onClick={() => period === "month" ? navigateMonth("prev") : navigateDate("prev")}
                   className="btn btn-sm btn-secondary"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
                 </button>
 
                 <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg min-w-[200px] justify-center">
@@ -311,7 +311,7 @@ export default function WorkerStatsPage() {
                   onClick={() => period === "month" ? navigateMonth("next") : navigateDate("next")}
                   className="btn btn-sm btn-secondary"
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-4 h-4 rtl:rotate-180" />
                 </button>
               </div>
 

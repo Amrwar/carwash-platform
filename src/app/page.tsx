@@ -82,7 +82,7 @@ export default function HomePage() {
           className="mt-8 inline-flex items-center gap-2 rounded-lg bg-red-600 px-6 py-3 text-white font-semibold hover:bg-red-700 transition-colors"
         >
           {t("home.goToDashboard")}
-          <ArrowRight className="w-5 h-5" />
+          <ArrowRight className="w-5 h-5 rtl:rotate-180" />
         </Link>
       </section>
 

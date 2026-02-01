@@ -341,7 +341,7 @@ export default function ReportsPage() {
                     disabled={currentPage === 1}
                     className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <ChevronLeft className="w-5 h-5" />
+                    <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
                   </button>
                   <div className="flex items-center gap-1">
                     {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
@@ -376,7 +376,7 @@ export default function ReportsPage() {
                     disabled={currentPage === totalPages}
                     className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <ChevronRight className="w-5 h-5" />
+                    <ChevronRight className="w-5 h-5 rtl:rotate-180" />
                   </button>
                 </div>
               </div>

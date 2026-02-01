@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+function normalizeDigits(str: string): string {
+  return str.replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
+}
+
+function toArabicDigits(str: string): string {
+  return str.replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[parseInt(d)]);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -10,11 +18,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, data: null });
     }
 
+    const normalizedPlate = normalizeDigits(plate).toUpperCase();
+    const arabicPlate = toArabicDigits(normalizedPlate);
+
     const records = await prisma.washRecord.findMany({
       where: {
-        plateNumber: {
-          contains: plate.toUpperCase(),
-        },
+        OR: [
+          { plateNumber: { contains: normalizedPlate } },
+          { plateNumber: { contains: arabicPlate } },
+        ],
       },
       orderBy: { entryTime: "desc" },
       take: 20,
@@ -44,7 +56,7 @@ export async function GET(request: NextRequest) {
     }, {} as Record<string, typeof records>);
 
     // Get customer info for the most matching plate
-    const exactMatch = Object.keys(plateGroups).find(p => p === plate.toUpperCase());
+    const exactMatch = Object.keys(plateGroups).find(p => p === normalizedPlate);
     const bestMatch = exactMatch || Object.keys(plateGroups)[0];
     const customerRecords = plateGroups[bestMatch];
 

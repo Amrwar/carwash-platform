@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCairoDayStart, getCairoDayEnd, getCairoMonthStart, getCairoMonthEnd, formatCairoDate } from "@/lib/date-utils";
 
+function normalizeDigits(str: string): string {
+  return str.replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -52,7 +56,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const recordData: Record<string, unknown> = {
-      plateNumber: body.plateNumber.trim().toUpperCase(),
+      plateNumber: normalizeDigits(body.plateNumber.trim()).toUpperCase(),
       carType: body.carType || null,
       phoneNumber: body.phoneNumber || null,
       washType: body.washType,
