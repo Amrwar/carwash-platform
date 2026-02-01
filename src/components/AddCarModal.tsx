@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Modal from "./Modal";
 import { WashRecord, Worker } from "@prisma/client";
 import { Plus, Loader2, Phone, Star, User, Calendar, Award } from "lucide-react";
+import { useI18n } from "@/i18n/context";
 
 type WashRecordWithWorker = WashRecord & { worker: Worker | null };
 type WashType = "INNER" | "OUTER" | "FREE" | "FULL";
@@ -40,19 +41,20 @@ const WASH_PRICES: Record<WashType, number> = {
   FREE: 0,
 };
 
-const washTypes: { value: WashType; label: string; price: number; color: string }[] = [
-  { value: "INNER", label: "Inner", price: 90, color: "bg-blue-100 text-blue-700 border-blue-300" },
-  { value: "OUTER", label: "Outer", price: 90, color: "bg-green-100 text-green-700 border-green-300" },
-  { value: "FULL", label: "Full", price: 170, color: "bg-purple-100 text-purple-700 border-purple-300" },
-  { value: "FREE", label: "Free", price: 0, color: "bg-gray-100 text-gray-700 border-gray-300" },
-];
-
-const paymentTypes: { value: PaymentType; label: string }[] = [
-  { value: "CASH", label: "Cash" },
-  { value: "INSTAPAY", label: "InstaPay" },
-];
-
 export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAddWorker }: AddCarModalProps) {
+  const { t, locale } = useI18n();
+
+  const washTypes: { value: WashType; label: string; price: number; color: string }[] = [
+    { value: "INNER", label: t("addCar.inner"), price: 90, color: "bg-blue-100 text-blue-700 border-blue-300" },
+    { value: "OUTER", label: t("addCar.outer"), price: 90, color: "bg-green-100 text-green-700 border-green-300" },
+    { value: "FULL", label: t("addCar.full"), price: 170, color: "bg-purple-100 text-purple-700 border-purple-300" },
+    { value: "FREE", label: t("addCar.free"), price: 0, color: "bg-gray-100 text-gray-700 border-gray-300" },
+  ];
+
+  const paymentTypes: { value: PaymentType; label: string }[] = [
+    { value: "CASH", label: t("addCar.cash") },
+    { value: "INSTAPAY", label: t("addCar.instapay") },
+  ];
   const [loading, setLoading] = useState(false);
   const [showNewWorker, setShowNewWorker] = useState(false);
   const [newWorkerName, setNewWorkerName] = useState("");
@@ -163,14 +165,14 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.plateNumber.trim()) {
-      newErrors.plateNumber = "Plate number is required";
+      newErrors.plateNumber = t("addCar.plateRequired");
     }
     if (!isFreeWash) {
       if (!formData.paymentType) {
-        newErrors.paymentType = "Payment type is required";
+        newErrors.paymentType = t("addCar.paymentRequired");
       }
       if (!formData.amountPaid || parseFloat(formData.amountPaid) <= 0) {
-        newErrors.amountPaid = "Amount must be greater than 0";
+        newErrors.amountPaid = t("addCar.amountRequired");
       }
     }
     setErrors(newErrors);
@@ -232,15 +234,15 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return date.toLocaleDateString(locale === "ar" ? "ar-EG" : "en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add New Car" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title={t("addCar.title")} size="lg">
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="label">Plate Number *</label>
+            <label className="label">{t("addCar.plateNumber")} *</label>
             <div className="relative">
               <input
                 type="text"
@@ -259,11 +261,11 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
             {errors.plateNumber && <p className="text-sm text-red-500 mt-1">{errors.plateNumber}</p>}
           </div>
           <div>
-            <label className="label">Car Type</label>
+            <label className="label">{t("addCar.carType")}</label>
             <input
               type="text"
               className="input"
-              placeholder="e.g., Hyundai Elantra"
+              placeholder={t("addCar.carTypePlaceholder")}
               value={formData.carType}
               onChange={(e) => setFormData({ ...formData, carType: e.target.value })}
             />
@@ -280,7 +282,7 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
                   <User className="w-5 h-5 text-blue-500" />
                 )}
                 <span className={`font-semibold ${customerInfo.isVIP ? "text-amber-800" : "text-blue-800"}`}>
-                  {customerInfo.isVIP ? "VIP Customer!" : "Returning Customer!"}
+                  {customerInfo.isVIP ? t("addCar.vipCustomer") : t("addCar.returningCustomer")}
                 </span>
               </div>
               <button
@@ -288,21 +290,21 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
                 onClick={handleApplyCustomerInfo}
                 className="text-sm font-medium text-blue-600 hover:text-blue-800"
               >
-                Auto-fill info
+                {t("addCar.autoFill")}
               </button>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
               <div className="flex items-center gap-2">
                 <Star className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-600">{customerInfo.totalVisits} visits</span>
+                <span className="text-gray-600">{customerInfo.totalVisits} {t("addCar.visits")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-600">Last: {formatDate(customerInfo.lastVisit)}</span>
+                <span className="text-gray-600">{t("addCar.last")}: {formatDate(customerInfo.lastVisit)}</span>
               </div>
               <div className="col-span-2 text-gray-600">
-                Total spent: <span className="font-semibold">{customerInfo.totalSpent} EGP</span>
-                {" • "}Favorite: <span className="font-semibold">{customerInfo.favoriteWashType}</span>
+                {t("addCar.totalSpent")}: <span className="font-semibold">{customerInfo.totalSpent} {t("common.egp")}</span>
+                {" • "}{t("addCar.favorite")}: <span className="font-semibold">{customerInfo.favoriteWashType}</span>
               </div>
             </div>
           </div>
@@ -311,20 +313,20 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
         <div>
           <label className="label flex items-center gap-2">
             <Phone className="w-4 h-4" />
-            Phone Number (for WhatsApp notification)
+            {t("addCar.phone")}
           </label>
           <input
             type="tel"
             className="input"
-            placeholder="e.g., 01012345678"
+            placeholder={t("addCar.phonePlaceholder")}
             value={formData.phoneNumber}
             onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value.replace(/[^0-9]/g, "") })}
           />
-          <p className="text-xs text-gray-500 mt-1">Customer will receive WhatsApp message when car is ready</p>
+          <p className="text-xs text-gray-500 mt-1">{t("addCar.phoneHint")}</p>
         </div>
 
         <div>
-          <label className="label">Wash Type *</label>
+          <label className="label">{t("addCar.washType")} *</label>
           <div className="grid grid-cols-4 gap-2">
             {washTypes.map((type) => (
               <button
@@ -339,7 +341,7 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
               >
                 <span className="block">{type.label}</span>
                 <span className="block text-xs opacity-75">
-                  {type.price > 0 ? `${type.price} EGP` : "Free"}
+                  {type.price > 0 ? `${type.price} ${t("common.egp")}` : t("addCar.free")}
                 </span>
               </button>
             ))}
@@ -347,7 +349,7 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
         </div>
 
         <div>
-          <label className="label">Worker</label>
+          <label className="label">{t("addCar.worker")}</label>
           {!showNewWorker ? (
             <div className="flex gap-2">
               <select
@@ -355,7 +357,7 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
                 value={formData.workerId}
                 onChange={(e) => setFormData({ ...formData, workerId: e.target.value })}
               >
-                <option value="">Select worker...</option>
+                <option value="">{t("addCar.selectWorker")}</option>
                 {activeWorkers.map((worker) => (
                   <option key={worker.id} value={worker.id}>{worker.name}</option>
                 ))}
@@ -369,7 +371,7 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
               <input
                 type="text"
                 className="input flex-1"
-                placeholder="Worker name"
+                placeholder={t("addCar.workerName")}
                 value={newWorkerName}
                 onChange={(e) => setNewWorkerName(e.target.value)}
               />
@@ -379,14 +381,14 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
                 disabled={addingWorker || !newWorkerName.trim()}
                 className="btn btn-primary"
               >
-                {addingWorker ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add"}
+                {addingWorker ? <Loader2 className="w-4 h-4 animate-spin" /> : t("common.add")}
               </button>
               <button
                 type="button"
                 onClick={() => { setShowNewWorker(false); setNewWorkerName(""); }}
                 className="btn btn-ghost"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           )}
@@ -396,7 +398,7 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
         {!isFreeWash && (
           <>
             <div>
-              <label className="label">Payment Type *</label>
+              <label className="label">{t("addCar.paymentType")} *</label>
               <div className="grid grid-cols-2 gap-2">
                 {paymentTypes.map((type) => (
                   <button
@@ -418,7 +420,7 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
 
             <div className={isInstaPay ? "grid grid-cols-2 gap-4" : ""}>
               <div>
-                <label className="label">Amount (EGP) *</label>
+                <label className="label">{t("addCar.amount")} *</label>
                 <input
                   type="number"
                   className="input"
@@ -432,7 +434,7 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
               </div>
               {isInstaPay && (
                 <div>
-                  <label className="label">Tip (EGP)</label>
+                  <label className="label">{t("addCar.tip")}</label>
                   <input
                     type="number"
                     className="input"
@@ -450,16 +452,16 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
 
         {isFreeWash && (
           <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <p className="text-sm text-gray-600">Free wash selected - no payment required.</p>
+            <p className="text-sm text-gray-600">{t("addCar.freeWashNote")}</p>
           </div>
         )}
 
         <div>
-          <label className="label">Notes</label>
+          <label className="label">{t("common.notes")}</label>
           <textarea
             className="input resize-none"
             rows={2}
-            placeholder="Optional notes..."
+            placeholder={t("common.notes") + "..."}
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           />
@@ -473,16 +475,16 @@ export default function AddCarModal({ isOpen, onClose, onSuccess, workers, onAdd
 
         <div className="flex gap-3 pt-2">
           <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
-            Cancel
+            {t("common.cancel")}
           </button>
           <button type="submit" disabled={loading} className="btn btn-primary flex-1">
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Adding...
+                {t("addCar.adding")}
               </>
             ) : (
-              "Add Car"
+              t("addCar.addCar")
             )}
           </button>
         </div>

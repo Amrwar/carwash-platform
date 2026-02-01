@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Modal from "./Modal";
 import { WashRecord, Worker } from "@prisma/client";
 import { Loader2, XCircle } from "lucide-react";
+import { useI18n } from "@/i18n/context";
 
 type WashRecordWithWorker = WashRecord & { worker: Worker | null };
 type PaymentType = "CASH" | "INSTAPAY";
@@ -15,12 +16,13 @@ interface CancelModalProps {
   record: WashRecordWithWorker | null;
 }
 
-const paymentTypes: { value: PaymentType; label: string }[] = [
-  { value: "CASH", label: "Cash" },
-  { value: "INSTAPAY", label: "InstaPay" },
-];
-
 export default function CancelModal({ isOpen, onClose, onSuccess, record }: CancelModalProps) {
+  const { t } = useI18n();
+
+  const paymentTypes: { value: PaymentType; label: string }[] = [
+    { value: "CASH", label: t("addCar.cash") },
+    { value: "INSTAPAY", label: t("addCar.instapay") },
+  ];
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     amountPaid: "",
@@ -73,20 +75,20 @@ export default function CancelModal({ isOpen, onClose, onSuccess, record }: Canc
   if (!record) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Car Left Without Completing" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title={t("cancel.title")} size="md">
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
           <div className="flex items-start gap-3">
             <XCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-amber-800">Mark {record.plateNumber} as left?</p>
-              <p className="text-sm text-amber-700 mt-1">Original: {record.washType} wash ({record.amountPaid} EGP)</p>
+              <p className="font-medium text-amber-800">{t("cancel.markAsLeft")} {record.plateNumber}?</p>
+              <p className="text-sm text-amber-700 mt-1">Original: {record.washType} wash ({record.amountPaid} {t("common.egp")})</p>
             </div>
           </div>
         </div>
 
         <div>
-          <label className="label">Amount Actually Paid (EGP)</label>
+          <label className="label">{t("cancel.amountPaid")}</label>
           <input
             type="number"
             className="input"
@@ -96,12 +98,12 @@ export default function CancelModal({ isOpen, onClose, onSuccess, record }: Canc
             value={formData.amountPaid}
             onChange={(e) => setFormData({ ...formData, amountPaid: e.target.value })}
           />
-          <p className="text-xs text-gray-500 mt-1">Enter 0 if customer left without paying</p>
+          <p className="text-xs text-gray-500 mt-1">{t("cancel.amountHint")}</p>
         </div>
 
         {formData.amountPaid && parseFloat(formData.amountPaid) > 0 && (
           <div>
-            <label className="label">Payment Type</label>
+            <label className="label">{t("cancel.paymentType")}</label>
             <div className="grid grid-cols-2 gap-2">
               {paymentTypes.map((type) => (
                 <button
@@ -122,11 +124,11 @@ export default function CancelModal({ isOpen, onClose, onSuccess, record }: Canc
         )}
 
         <div>
-          <label className="label">Reason / Notes</label>
+          <label className="label">{t("cancel.reason")}</label>
           <textarea
             className="input resize-none"
             rows={2}
-            placeholder="e.g., Waited too long, changed mind..."
+            placeholder={t("cancel.reasonPlaceholder")}
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           />
@@ -139,9 +141,9 @@ export default function CancelModal({ isOpen, onClose, onSuccess, record }: Canc
         )}
 
         <div className="flex gap-3 pt-2">
-          <button type="button" onClick={onClose} className="btn btn-secondary flex-1">Go Back</button>
+          <button type="button" onClick={onClose} className="btn btn-secondary flex-1">{t("common.goBack")}</button>
           <button type="submit" disabled={loading} className="btn btn-danger flex-1">
-            {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Processing...</> : <><XCircle className="w-4 h-4" />Mark as Left</>}
+            {loading ? <><Loader2 className="w-4 h-4 animate-spin" />{t("cancel.processing")}</> : <><XCircle className="w-4 h-4" />{t("cancel.markAsLeft")}</>}
           </button>
         </div>
       </form>

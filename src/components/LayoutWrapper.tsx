@@ -5,9 +5,9 @@ import Navigation from '@/components/Navigation';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isLoginPage = pathname === '/login';
+  const isFullBleed = pathname === '/' || pathname === '/login';
 
-  if (isLoginPage) {
+  if (isFullBleed) {
     return <>{children}</>;
   }
 

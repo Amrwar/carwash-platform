@@ -1,21 +1,38 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Car, BarChart3, Users, LogOut, Wrench } from "lucide-react";
 import clsx from "clsx";
+import { useI18n } from "@/i18n/context";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: Car },
+  { href: "/dashboard", label: "Dashboard", icon: Car },
   { href: "/mechanic", label: "Mechanic", icon: Wrench },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/worker-stats", label: "Workers", icon: Users },
 ];
 
 export default function Navigation() {
-  const pathname = usePathname();
+  const { t } = useI18n();
 
-  if (pathname === "/login") return null;
+  const navItems = [
+    { href: "/dashboard", label: t("nav.dashboard"), icon: Car },
+    { href: "/mechanic", label: t("nav.mechanic"), icon: Wrench },
+    { href: "/reports", label: t("nav.reports"), icon: BarChart3 },
+    { href: "/worker-stats", label: t("nav.workers"), icon: Users },
+  ];
+
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+  };
+
+  if (pathname === "/" || pathname === "/login") return null;
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
@@ -47,13 +64,16 @@ export default function Navigation() {
               })}
             </div>
           </div>
-          <Link
-            href="/login"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Logout</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">{t("nav.logout")}</span>
+            </button>
+          </div>
         </div>
       </div>
       {/* Mobile nav */}

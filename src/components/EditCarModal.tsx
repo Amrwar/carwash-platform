@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Modal from "./Modal";
 import { WashRecord, Worker } from "@prisma/client";
 import { Loader2 } from "lucide-react";
+import { useI18n } from "@/i18n/context";
 
 type WashRecordWithWorker = WashRecord & { worker: Worker | null };
 type WashType = "INNER" | "OUTER" | "FREE" | "FULL";
@@ -17,19 +18,20 @@ interface EditCarModalProps {
   workers: Worker[];
 }
 
-const washTypes: { value: WashType; label: string; color: string }[] = [
-  { value: "INNER", label: "Inner", color: "bg-blue-100 text-blue-700 border-blue-300" },
-  { value: "OUTER", label: "Outer", color: "bg-green-100 text-green-700 border-green-300" },
-  { value: "FULL", label: "Full", color: "bg-purple-100 text-purple-700 border-purple-300" },
-  { value: "FREE", label: "Free", color: "bg-gray-100 text-gray-700 border-gray-300" },
-];
-
-const paymentTypes: { value: PaymentType; label: string }[] = [
-  { value: "CASH", label: "Cash" },
-  { value: "INSTAPAY", label: "InstaPay" },
-];
-
 export default function EditCarModal({ isOpen, onClose, onSuccess, record, workers }: EditCarModalProps) {
+  const { t } = useI18n();
+
+  const washTypes: { value: WashType; label: string; color: string }[] = [
+    { value: "INNER", label: t("addCar.inner"), color: "bg-blue-100 text-blue-700 border-blue-300" },
+    { value: "OUTER", label: t("addCar.outer"), color: "bg-green-100 text-green-700 border-green-300" },
+    { value: "FULL", label: t("addCar.full"), color: "bg-purple-100 text-purple-700 border-purple-300" },
+    { value: "FREE", label: t("addCar.free"), color: "bg-gray-100 text-gray-700 border-gray-300" },
+  ];
+
+  const paymentTypes: { value: PaymentType; label: string }[] = [
+    { value: "CASH", label: t("addCar.cash") },
+    { value: "INSTAPAY", label: t("addCar.instapay") },
+  ];
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     plateNumber: "",
@@ -67,7 +69,7 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, record, worke
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.plateNumber.trim()) {
-      newErrors.plateNumber = "Plate number is required";
+      newErrors.plateNumber = t("addCar.plateRequired");
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -112,11 +114,11 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, record, worke
   const activeWorkers = workers.filter((w) => w.isActive);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Edit Record" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title={t("editCar.title")} size="lg">
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="label">Plate Number *</label>
+            <label className="label">{t("editCar.plateNumber")} *</label>
             <input
               type="text"
               className="input uppercase"
@@ -126,7 +128,7 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, record, worke
             {errors.plateNumber && <p className="text-sm text-red-500 mt-1">{errors.plateNumber}</p>}
           </div>
           <div>
-            <label className="label">Car Type</label>
+            <label className="label">{t("editCar.carType")}</label>
             <input
               type="text"
               className="input"
@@ -137,7 +139,7 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, record, worke
         </div>
 
         <div>
-          <label className="label">Phone Number</label>
+          <label className="label">{t("editCar.phone")}</label>
           <input
             type="tel"
             className="input"
@@ -147,7 +149,7 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, record, worke
         </div>
 
         <div>
-          <label className="label">Wash Type</label>
+          <label className="label">{t("editCar.washType")}</label>
           <div className="grid grid-cols-4 gap-2">
             {washTypes.map((type) => (
               <button
@@ -167,13 +169,13 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, record, worke
         </div>
 
         <div>
-          <label className="label">Worker</label>
+          <label className="label">{t("editCar.worker")}</label>
           <select
             className="select"
             value={formData.workerId}
             onChange={(e) => setFormData({ ...formData, workerId: e.target.value })}
           >
-            <option value="">Select worker...</option>
+            <option value="">{t("editCar.selectWorker")}</option>
             {activeWorkers.map((worker) => (
               <option key={worker.id} value={worker.id}>{worker.name}</option>
             ))}
@@ -183,7 +185,7 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, record, worke
         {!isFreeWash && (
           <>
             <div>
-              <label className="label">Payment Type</label>
+              <label className="label">{t("editCar.paymentType")}</label>
               <div className="grid grid-cols-2 gap-2">
                 {paymentTypes.map((type) => (
                   <button
@@ -204,7 +206,7 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, record, worke
 
             <div className={isInstaPay ? "grid grid-cols-2 gap-4" : ""}>
               <div>
-                <label className="label">Amount (EGP)</label>
+                <label className="label">{t("editCar.amount")}</label>
                 <input
                   type="number"
                   className="input"
@@ -216,7 +218,7 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, record, worke
               </div>
               {isInstaPay && (
                 <div>
-                  <label className="label">Tip (EGP)</label>
+                  <label className="label">{t("editCar.tip")}</label>
                   <input
                     type="number"
                     className="input"
@@ -232,7 +234,7 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, record, worke
         )}
 
         <div>
-          <label className="label">Notes</label>
+          <label className="label">{t("common.notes")}</label>
           <textarea
             className="input resize-none"
             rows={2}
@@ -248,9 +250,9 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, record, worke
         )}
 
         <div className="flex gap-3 pt-2">
-          <button type="button" onClick={onClose} className="btn btn-secondary flex-1">Cancel</button>
+          <button type="button" onClick={onClose} className="btn btn-secondary flex-1">{t("common.cancel")}</button>
           <button type="submit" disabled={loading} className="btn btn-primary flex-1">
-            {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Saving...</> : "Save Changes"}
+            {loading ? <><Loader2 className="w-4 h-4 animate-spin" />{t("editCar.saving")}</> : t("common.save")}
           </button>
         </div>
       </form>

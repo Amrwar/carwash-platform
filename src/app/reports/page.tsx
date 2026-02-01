@@ -5,20 +5,17 @@ import { WashRecord, Worker } from "@prisma/client";
 import StatsCard from "@/components/StatsCard";
 import {
   Car,
-  CheckCircle,
   DollarSign,
   CreditCard,
-  Banknote,
-  Smartphone,
   Download,
   RefreshCw,
   Calendar,
   ChevronLeft,
   ChevronRight,
-  Clock,
   TrendingUp,
 } from "lucide-react";
 import clsx from "clsx";
+import { useI18n } from "@/i18n/context";
 
 type WashRecordWithWorker = WashRecord & { worker: Worker | null };
 
@@ -34,14 +31,7 @@ const formatDate = (date: Date | string, format: string) => {
   if (format === "yyyy-MM") {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   }
-  if (format === "MMM d") {
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  }
   return d.toLocaleDateString();
-};
-
-const formatTime = (date: Date | string) => {
-  return new Date(date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 };
 
 const formatMoney = (amount: number) => {
@@ -51,6 +41,17 @@ const formatMoney = (amount: number) => {
 const ITEMS_PER_PAGE = 15;
 
 export default function ReportsPage() {
+  const { t, locale } = useI18n();
+  const localeCode = locale === "ar" ? "ar-EG" : "en-US";
+
+  const formatDateLocale = (date: Date | string) => {
+    return new Date(date).toLocaleDateString(localeCode, { month: "short", day: "numeric" });
+  };
+
+  const formatTime = (date: Date | string) => {
+    return new Date(date).toLocaleTimeString(localeCode, { hour: "2-digit", minute: "2-digit" });
+  };
+
   const [records, setRecords] = useState<WashRecordWithWorker[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(true);
@@ -151,7 +152,7 @@ export default function ReportsPage() {
     return acc;
   }, {} as Record<string, { count: number; revenue: number; instapayTips: number }>);
 
-  const monthDisplay = new Date(`${selectedMonth}-01`).toLocaleDateString("en-US", {
+  const monthDisplay = new Date(`${selectedMonth}-01`).toLocaleDateString(localeCode, {
     month: "long",
     year: "numeric",
   });
@@ -160,40 +161,21 @@ export default function ReportsPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Monthly Reports</h1>
-          <p className="text-gray-500">View and export monthly data</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("reports.title")}</h1>
+          <div className="flex items-center gap-2 mt-1">
+            <Calendar className="w-4 h-4 text-gray-400" />
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="text-gray-600 border-none bg-transparent cursor-pointer hover:text-gray-900"
+            />
+          </div>
         </div>
         <button onClick={handleExportMonthly} className="btn btn-primary">
           <Download className="w-4 h-4" />
-          Export Excel
+          {t("reports.exportExcel")}
         </button>
-      </div>
-
-      <div className="card p-4">
-        <div className="flex items-center justify-center gap-4">
-          <button
-            onClick={handlePreviousMonth}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-primary-500" />
-            <span className="text-lg font-semibold text-gray-900">{monthDisplay}</span>
-          </div>
-          <button
-            onClick={handleNextMonth}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-          <input
-            type="month"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="input w-40 ml-4"
-          />
-        </div>
       </div>
 
       {loading ? (
@@ -202,20 +184,16 @@ export default function ReportsPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-            <StatsCard title="Total Cars" value={stats.totalCars} icon={Car} color="blue" />
-            <StatsCard title="In Progress" value={stats.inProgress} icon={Clock} color="yellow" />
-            <StatsCard title="Finished" value={stats.finished} icon={CheckCircle} color="green" />
-            <StatsCard title="Revenue" value={`${stats.totalRevenue} EGP`} icon={DollarSign} color="purple" />
-            <StatsCard title="InstaPay Tips" value={`${stats.instapayTips} EGP`} icon={CreditCard} color="yellow" />
-            <StatsCard title="Net Revenue" value={`${stats.netRevenue} EGP`} icon={TrendingUp} color="green" />
-            <StatsCard title="Cash" value={`${stats.totalCash} EGP`} icon={Banknote} color="gray" />
-            <StatsCard title="InstaPay" value={`${stats.totalInstapay} EGP`} icon={Smartphone} color="blue" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatsCard title={t("reports.totalCars")} value={stats.totalCars} subtitle={`${stats.inProgress} ${t("reports.inProgress")} · ${stats.finished} ${t("reports.finished")}`} icon={Car} color="blue" />
+            <StatsCard title={t("reports.revenue")} value={`${stats.totalRevenue} ${t("common.egp")}`} subtitle={`${t("reports.cash")} ${stats.totalCash} · ${t("reports.instapay")} ${stats.totalInstapay}`} icon={DollarSign} color="purple" />
+            <StatsCard title={t("reports.instapayTips")} value={`${stats.instapayTips} ${t("common.egp")}`} icon={CreditCard} color="yellow" />
+            <StatsCard title={t("reports.netRevenue")} value={`${stats.netRevenue} ${t("common.egp")}`} icon={TrendingUp} color="green" />
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="card p-5">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">By Wash Type</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">{t("reports.byWashType")}</h3>
               <div className="space-y-3">
                 {Object.entries(byWashType).map(([type, data]) => (
                   <div
@@ -224,19 +202,19 @@ export default function ReportsPage() {
                   >
                     <div className="flex items-center gap-3">
                       <span className={clsx("badge", washTypeBadges[type])}>{type}</span>
-                      <span className="text-gray-600">{data.count} cars</span>
+                      <span className="text-gray-600">{data.count} {t("reports.cars")}</span>
                     </div>
-                    <span className="font-semibold text-gray-900">{formatMoney(data.revenue)} EGP</span>
+                    <span className="font-semibold text-gray-900">{formatMoney(data.revenue)} {t("common.egp")}</span>
                   </div>
                 ))}
                 {Object.keys(byWashType).length === 0 && (
-                  <p className="text-gray-500 text-center py-4">No data</p>
+                  <p className="text-gray-500 text-center py-4">{t("common.noData")}</p>
                 )}
               </div>
             </div>
 
             <div className="card p-5">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">By Worker</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">{t("reports.byWorker")}</h3>
               <div className="space-y-3">
                 {Object.entries(byWorker)
                   .sort((a, b) => b[1].revenue - a[1].revenue)
@@ -248,17 +226,17 @@ export default function ReportsPage() {
                       <div>
                         <p className="font-medium text-gray-900">{name}</p>
                         <p className="text-sm text-gray-500">
-                          {data.count} cars
+                          {data.count} {t("reports.cars")}
                           {data.instapayTips > 0 && (
-                            <span className="text-amber-600"> - InstaPay Tips: {formatMoney(data.instapayTips)} EGP</span>
+                            <span className="text-amber-600"> - {t("reports.instapayTips")}: {formatMoney(data.instapayTips)} {t("common.egp")}</span>
                           )}
                         </p>
                       </div>
-                      <span className="font-semibold text-gray-900">{formatMoney(data.revenue)} EGP</span>
+                      <span className="font-semibold text-gray-900">{formatMoney(data.revenue)} {t("common.egp")}</span>
                     </div>
                   ))}
                 {Object.keys(byWorker).length === 0 && (
-                  <p className="text-gray-500 text-center py-4">No data</p>
+                  <p className="text-gray-500 text-center py-4">{t("common.noData")}</p>
                 )}
               </div>
             </div>
@@ -266,36 +244,36 @@ export default function ReportsPage() {
 
           <div className="card p-5">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              All Records ({records.length})
+              {t("reports.allRecords")} ({records.length})
             </h3>
             <div className="overflow-x-auto">
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Plate</th>
-                    <th>Type</th>
-                    <th>Worker</th>
-                    <th>Entry</th>
-                    <th>Duration</th>
-                    <th>Payment</th>
-                    <th>Amount</th>
-                    <th>InstaPay Tip</th>
-                    <th>Status</th>
+                    <th>{t("reports.date")}</th>
+                    <th>{t("reports.plate")}</th>
+                    <th>{t("reports.type")}</th>
+                    <th>{t("reports.worker")}</th>
+                    <th>{t("reports.entry")}</th>
+                    <th>{t("reports.duration")}</th>
+                    <th>{t("reports.payment")}</th>
+                    <th>{t("reports.amount")}</th>
+                    <th>{t("reports.instapayTip")}</th>
+                    <th>{t("reports.status")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedRecords.length === 0 ? (
                     <tr>
                       <td colSpan={10} className="text-center py-12 text-gray-500">
-                        No records for this month
+                        {t("reports.noRecords")}
                       </td>
                     </tr>
                   ) : (
                     paginatedRecords.map((record) => (
                       <tr key={record.id}>
                         <td className="text-gray-600">
-                          {formatDate(record.entryTime, "MMM d")}
+                          {formatDateLocale(record.entryTime)}
                         </td>
                         <td>
                           <span className="font-mono font-semibold text-gray-900">
@@ -310,7 +288,7 @@ export default function ReportsPage() {
                         <td className="text-gray-700">{record.worker?.name || "-"}</td>
                         <td className="text-gray-600">{formatTime(record.entryTime)}</td>
                         <td className="text-gray-600">
-                          {record.elapsedMinutes !== null ? `${record.elapsedMinutes} min` : "-"}
+                          {record.elapsedMinutes !== null ? `${record.elapsedMinutes} ${t("reports.min")}` : "-"}
                         </td>
                         <td>
                           {record.paymentType ? (
@@ -327,11 +305,11 @@ export default function ReportsPage() {
                           )}
                         </td>
                         <td className="font-medium text-gray-900">
-                          {record.amountPaid > 0 ? `${formatMoney(record.amountPaid)} EGP` : "-"}
+                          {record.amountPaid > 0 ? `${formatMoney(record.amountPaid)} ${t("common.egp")}` : "-"}
                         </td>
                         <td className="text-amber-600 font-medium">
                           {record.paymentType === "INSTAPAY" && record.tipAmount > 0
-                            ? `${formatMoney(record.tipAmount)} EGP`
+                            ? `${formatMoney(record.tipAmount)} ${t("common.egp")}`
                             : "-"}
                         </td>
                         <td>
@@ -341,7 +319,7 @@ export default function ReportsPage() {
                               record.status === "FINISHED" ? "badge-green" : "badge-yellow"
                             )}
                           >
-                            {record.status === "FINISHED" ? "Done" : "Active"}
+                            {record.status === "FINISHED" ? t("reports.done") : t("reports.active")}
                           </span>
                         </td>
                       </tr>
@@ -355,7 +333,7 @@ export default function ReportsPage() {
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                 <div className="text-sm text-gray-500">
-                  Showing {startIndex + 1} to {Math.min(startIndex + ITEMS_PER_PAGE, records.length)} of {records.length} records
+                  {t("common.showing")} {startIndex + 1} {t("common.to")} {Math.min(startIndex + ITEMS_PER_PAGE, records.length)} {t("common.of")} {records.length} {t("common.records")}
                 </div>
                 <div className="flex items-center gap-2">
                   <button

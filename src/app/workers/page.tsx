@@ -12,8 +12,10 @@ import {
   Loader2,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { useI18n } from '@/i18n/context';
 
 export default function WorkersPage() {
+  const { t } = useI18n();
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -98,7 +100,7 @@ export default function WorkersPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <RefreshCw className="w-8 h-8 text-primary-500 animate-spin mx-auto mb-3" />
-          <p className="text-gray-500">Loading workers...</p>
+          <p className="text-gray-500">{t("workers.loadingWorkers")}</p>
         </div>
       </div>
     );
@@ -109,12 +111,12 @@ export default function WorkersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Workers</h1>
-          <p className="text-gray-500">Manage your car wash workers</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("workers.title")}</h1>
+          <p className="text-gray-500">{t("workers.subtitle")}</p>
         </div>
         <button onClick={() => setShowAddModal(true)} className="btn btn-primary">
           <Plus className="w-4 h-4" />
-          Add Worker
+          {t("workers.addWorker")}
         </button>
       </div>
 
@@ -126,7 +128,7 @@ export default function WorkersPage() {
               <UserCheck className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Active Workers</p>
+              <p className="text-sm text-gray-600">{t("workers.activeWorkers")}</p>
               <p className="text-2xl font-bold text-emerald-600">{activeWorkers.length}</p>
             </div>
           </div>
@@ -137,7 +139,7 @@ export default function WorkersPage() {
               <UserX className="w-5 h-5 text-gray-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Inactive Workers</p>
+              <p className="text-sm text-gray-600">{t("workers.inactiveWorkers")}</p>
               <p className="text-2xl font-bold text-gray-600">{inactiveWorkers.length}</p>
             </div>
           </div>
@@ -148,7 +150,7 @@ export default function WorkersPage() {
               <Users className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total Workers</p>
+              <p className="text-sm text-gray-600">{t("workers.totalWorkers")}</p>
               <p className="text-2xl font-bold text-blue-600">{workers.length}</p>
             </div>
           </div>
@@ -162,12 +164,12 @@ export default function WorkersPage() {
           <div className="px-5 py-4 border-b border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <UserCheck className="w-5 h-5 text-emerald-500" />
-              Active Workers
+              {t("workers.activeWorkers")}
             </h3>
           </div>
           <div className="p-5">
             {activeWorkers.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No active workers</p>
+              <p className="text-gray-500 text-center py-8">{t("workers.noActive")}</p>
             ) : (
               <div className="space-y-3">
                 {activeWorkers.map((worker) => (
@@ -183,7 +185,7 @@ export default function WorkersPage() {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">{worker.name}</p>
-                        <p className="text-xs text-emerald-600">Active</p>
+                        <p className="text-xs text-emerald-600">{t("workers.active")}</p>
                       </div>
                     </div>
                     <button
@@ -196,7 +198,7 @@ export default function WorkersPage() {
                       ) : (
                         <>
                           <UserX className="w-4 h-4" />
-                          Deactivate
+                          {t("workers.deactivate")}
                         </>
                       )}
                     </button>
@@ -212,12 +214,12 @@ export default function WorkersPage() {
           <div className="px-5 py-4 border-b border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <UserX className="w-5 h-5 text-gray-400" />
-              Inactive Workers
+              {t("workers.inactiveWorkers")}
             </h3>
           </div>
           <div className="p-5">
             {inactiveWorkers.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No inactive workers</p>
+              <p className="text-gray-500 text-center py-8">{t("workers.noInactive")}</p>
             ) : (
               <div className="space-y-3">
                 {inactiveWorkers.map((worker) => (
@@ -233,7 +235,7 @@ export default function WorkersPage() {
                       </div>
                       <div>
                         <p className="font-medium text-gray-600">{worker.name}</p>
-                        <p className="text-xs text-gray-400">Inactive</p>
+                        <p className="text-xs text-gray-400">{t("workers.inactive")}</p>
                       </div>
                     </div>
                     <button
@@ -246,7 +248,7 @@ export default function WorkersPage() {
                       ) : (
                         <>
                           <UserCheck className="w-4 h-4" />
-                          Activate
+                          {t("workers.activate")}
                         </>
                       )}
                     </button>
@@ -258,15 +260,15 @@ export default function WorkersPage() {
         </div>
       </div>
 
-      {/* Add Worker Modal */}
-      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="Add Worker" size="sm">
+      {/* t(workers.addWorker) Modal */}
+      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={t("workers.addWorker")} size="sm">
         <form onSubmit={handleAddWorker} className="space-y-5">
           <div>
-            <label className="label">Worker Name</label>
+            <label className="label">{t("workers.workerName")}</label>
             <input
               type="text"
               className="input"
-              placeholder="Enter worker name"
+              placeholder={t("workers.enterName")}
               value={newWorkerName}
               onChange={(e) => setNewWorkerName(e.target.value)}
               autoFocus
@@ -289,7 +291,7 @@ export default function WorkersPage() {
               }}
               className="btn btn-secondary flex-1"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               type="submit"
@@ -299,10 +301,10 @@ export default function WorkersPage() {
               {addingWorker ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Adding...
+                  {t("workers.adding")}
                 </>
               ) : (
-                'Add Worker'
+                {t("workers.addWorker")}
               )}
             </button>
           </div>

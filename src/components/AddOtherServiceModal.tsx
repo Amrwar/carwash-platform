@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Modal from "./Modal";
 import { MechanicRecord } from "@prisma/client";
 import { Loader2, Settings, Plus } from "lucide-react";
+import { useI18n } from "@/i18n/context";
 
 type PaymentType = "CASH" | "INSTAPAY";
 
@@ -18,12 +19,13 @@ interface QuickService {
   price: number;
 }
 
-const paymentTypes: { value: PaymentType; label: string }[] = [
-  { value: "CASH", label: "Cash" },
-  { value: "INSTAPAY", label: "InstaPay" },
-];
-
 export default function AddOtherServiceModal({ isOpen, onClose, onSuccess }: AddOtherServiceModalProps) {
+  const { t } = useI18n();
+
+  const paymentTypes: { value: PaymentType; label: string }[] = [
+    { value: "CASH", label: t("addCar.cash") },
+    { value: "INSTAPAY", label: t("addCar.instapay") },
+  ];
   const [loading, setLoading] = useState(false);
   const [quickServices, setQuickServices] = useState<QuickService[]>(() => {
     if (typeof window !== "undefined") {
@@ -98,13 +100,13 @@ export default function AddOtherServiceModal({ isOpen, onClose, onSuccess }: Add
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.plateNumber.trim()) {
-      newErrors.plateNumber = "Plate number is required";
+      newErrors.plateNumber = t("addCar.plateRequired");
     }
     if (!formData.serviceName.trim()) {
-      newErrors.serviceName = "Service name is required";
+      newErrors.serviceName = t("otherService.serviceNameRequired");
     }
     if (!formData.servicePrice || parseFloat(formData.servicePrice) <= 0) {
-      newErrors.servicePrice = "Service price is required";
+      newErrors.servicePrice = t("otherService.servicePriceRequired");
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -149,11 +151,11 @@ export default function AddOtherServiceModal({ isOpen, onClose, onSuccess }: Add
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add Other Service" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title={t("otherService.title")} size="lg">
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="label">Plate Number *</label>
+            <label className="label">{t("otherService.plateNumber")} *</label>
             <input
               type="text"
               className="input uppercase"
@@ -165,11 +167,11 @@ export default function AddOtherServiceModal({ isOpen, onClose, onSuccess }: Add
             {errors.plateNumber && <p className="text-sm text-red-500 mt-1">{errors.plateNumber}</p>}
           </div>
           <div>
-            <label className="label">Car Type</label>
+            <label className="label">{t("otherService.carType")}</label>
             <input
               type="text"
               className="input"
-              placeholder="e.g., Hyundai Elantra"
+              placeholder={t("addCar.carTypePlaceholder")}
               value={formData.carType}
               onChange={(e) => setFormData({ ...formData, carType: e.target.value })}
             />
@@ -179,7 +181,7 @@ export default function AddOtherServiceModal({ isOpen, onClose, onSuccess }: Add
         {/* Quick Services */}
         {quickServices.length > 0 && (
           <div>
-            <label className="label">Quick Select Service</label>
+            <label className="label">{t("otherService.quickSelect")}</label>
             <div className="flex flex-wrap gap-2">
               {quickServices.map((service, index) => (
                 <div key={index} className="relative group">
@@ -192,7 +194,7 @@ export default function AddOtherServiceModal({ isOpen, onClose, onSuccess }: Add
                         : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
                     }`}
                   >
-                    {service.name} ({service.price} EGP)
+                    {service.name} ({service.price} {t("common.egp")})
                   </button>
                   <button
                     type="button"
@@ -216,23 +218,23 @@ export default function AddOtherServiceModal({ isOpen, onClose, onSuccess }: Add
               className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
             >
               <Plus className="w-4 h-4" />
-              Add quick service button
+              {t("otherService.addQuickService")}
             </button>
           ) : (
             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm font-medium text-blue-800 mb-2">Add New Quick Service</p>
+              <p className="text-sm font-medium text-blue-800 mb-2">{t("otherService.addNewQuick")}</p>
               <div className="flex gap-2">
                 <input
                   type="text"
                   className="input flex-1"
-                  placeholder="Service name"
+                  placeholder={t("otherService.serviceNameInput")}
                   value={newServiceName}
                   onChange={(e) => setNewServiceName(e.target.value)}
                 />
                 <input
                   type="number"
                   className="input w-24"
-                  placeholder="Price"
+                  placeholder={t("otherService.priceInput")}
                   value={newServicePrice}
                   onChange={(e) => setNewServicePrice(e.target.value)}
                 />
@@ -241,14 +243,14 @@ export default function AddOtherServiceModal({ isOpen, onClose, onSuccess }: Add
                   onClick={handleAddQuickService}
                   className="btn btn-primary btn-sm"
                 >
-                  Add
+                  {t("common.add")}
                 </button>
                 <button
                   type="button"
                   onClick={() => { setShowAddService(false); setNewServiceName(""); setNewServicePrice(""); }}
                   className="btn btn-ghost btn-sm"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
               </div>
             </div>
@@ -257,18 +259,18 @@ export default function AddOtherServiceModal({ isOpen, onClose, onSuccess }: Add
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="label">Service Name *</label>
+            <label className="label">{t("otherService.serviceName")} *</label>
             <input
               type="text"
               className="input"
-              placeholder="e.g., Brake Pads, Air Filter..."
+              placeholder={t("otherService.serviceNamePlaceholder")}
               value={formData.serviceName}
               onChange={(e) => setFormData({ ...formData, serviceName: e.target.value })}
             />
             {errors.serviceName && <p className="text-sm text-red-500 mt-1">{errors.serviceName}</p>}
           </div>
           <div>
-            <label className="label">Service Price (EGP) *</label>
+            <label className="label">{t("otherService.servicePrice")} *</label>
             <input
               type="number"
               className="input"
@@ -282,7 +284,7 @@ export default function AddOtherServiceModal({ isOpen, onClose, onSuccess }: Add
         </div>
 
         <div>
-          <label className="label">Payment Type *</label>
+          <label className="label">{t("otherService.paymentType")} *</label>
           <div className="grid grid-cols-2 gap-2">
             {paymentTypes.map((type) => (
               <button
@@ -302,11 +304,11 @@ export default function AddOtherServiceModal({ isOpen, onClose, onSuccess }: Add
         </div>
 
         <div>
-          <label className="label">Notes</label>
+          <label className="label">{t("common.notes")}</label>
           <textarea
             className="input resize-none"
             rows={2}
-            placeholder="Optional notes..."
+            placeholder={t("common.notes") + "..."}
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           />
@@ -315,8 +317,8 @@ export default function AddOtherServiceModal({ isOpen, onClose, onSuccess }: Add
         {formData.servicePrice && parseFloat(formData.servicePrice) > 0 && (
           <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-gray-900">Total</span>
-              <span className="font-bold text-lg text-red-600">{formData.servicePrice} EGP</span>
+              <span className="font-semibold text-gray-900">{t("common.total")}</span>
+              <span className="font-bold text-lg text-red-600">{formData.servicePrice} {t("common.egp")}</span>
             </div>
           </div>
         )}
@@ -329,18 +331,18 @@ export default function AddOtherServiceModal({ isOpen, onClose, onSuccess }: Add
 
         <div className="flex gap-3 pt-2">
           <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
-            Cancel
+            {t("common.cancel")}
           </button>
           <button type="submit" disabled={loading} className="btn btn-primary flex-1">
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Adding...
+                {t("otherService.adding")}
               </>
             ) : (
               <>
                 <Settings className="w-4 h-4" />
-                Add Service
+                {t("otherService.addService")}
               </>
             )}
           </button>

@@ -14,14 +14,15 @@ import {
   Check,
   Loader2,
   Droplets,
-  Filter,
   Settings,
 } from "lucide-react";
 import clsx from "clsx";
+import { useI18n } from "@/i18n/context";
 import AddOilServiceModal from "@/components/AddOilServiceModal";
 import AddOtherServiceModal from "@/components/AddOtherServiceModal";
 
 export default function MechanicPage() {
+  const { t, locale } = useI18n();
   const [records, setRecords] = useState<MechanicRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showOilModal, setShowOilModal] = useState(false);
@@ -54,7 +55,7 @@ export default function MechanicPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this record?")) return;
+    if (!confirm(t("mechanic.deleteConfirm"))) return;
     
     setDeletingId(id);
     try {
@@ -94,22 +95,22 @@ export default function MechanicPage() {
   };
 
   const formatTime = (date: Date | string) => {
-    return new Date(date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    return new Date(date).toLocaleTimeString(locale === "ar" ? "ar-EG" : "en-US", { hour: "2-digit", minute: "2-digit" });
   };
 
   const formatOilType = (type: string | null) => {
     if (!type) return "-";
     switch (type) {
-      case "SHELL_4L": return "Shell 4L";
-      case "SHELL_5L": return "Shell 5L";
-      case "CUSTOMER_OWN": return "Customer Oil";
+      case "SHELL_4L": return t("mechanic.shell4l");
+      case "SHELL_5L": return t("mechanic.shell5l");
+      case "CUSTOMER_OWN": return t("mechanic.customerOil");
       default: return type;
     }
   };
 
   const formatServiceType = (type: string | null) => {
     if (!type) return "-";
-    return type === "OIL_ONLY" ? "Oil Only" : "Oil + Filter";
+    return type === "OIL_ONLY" ? t("mechanic.oilOnly") : t("mechanic.oilAndFilter");
   };
 
   const oilRecords = records.filter((r) => r.category === "OIL_SERVICE");
@@ -131,7 +132,7 @@ export default function MechanicPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Wrench className="w-7 h-7 text-red-600" />
-            {isToday ? "Today's Mechanic" : "Mechanic"}
+            {isToday ? t("mechanic.title") : t("mechanic.titleOther")}
           </h1>
           <div className="flex items-center gap-2 mt-1">
             <button onClick={() => navigateDate("prev")} className="p-1 hover:bg-gray-100 rounded">
@@ -152,9 +153,9 @@ export default function MechanicPage() {
             {!isToday && (
               <button
                 onClick={() => setSelectedDate(new Date().toISOString().split("T")[0])}
-                className="text-sm text-red-600 hover:text-red-700 font-medium ml-2"
+                className="text-sm text-red-600 hover:text-red-700 font-medium ms-2"
               >
-                Go to Today
+                {t("mechanic.goToToday")}
               </button>
             )}
           </div>
@@ -162,51 +163,48 @@ export default function MechanicPage() {
         <div className="flex gap-2">
           <button onClick={() => setShowOilModal(true)} className="btn btn-primary">
             <Droplets className="w-4 h-4" />
-            Oil Service
+            {t("mechanic.oilService")}
           </button>
           <button onClick={() => setShowOtherModal(true)} className="btn btn-secondary">
             <Settings className="w-4 h-4" />
-            Other Service
+            {t("mechanic.otherService")}
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <StatsCard title="Total Services" value={stats.total} icon={Wrench} color="blue" />
-        <StatsCard title="Total Revenue" value={`${stats.totalRevenue} EGP`} icon={DollarSign} color="purple" />
-        <StatsCard title="Oil Services" value={stats.oilServices} icon={Droplets} color="yellow" />
-        <StatsCard title="Oil Revenue" value={`${stats.oilRevenue} EGP`} icon={Droplets} color="yellow" />
-        <StatsCard title="Other Services" value={stats.otherServices} icon={Settings} color="gray" />
-        <StatsCard title="Other Revenue" value={`${stats.otherRevenue} EGP`} icon={Settings} color="gray" />
-        <StatsCard title="Received" value={`${stats.received} EGP`} icon={Check} color="green" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatsCard title={t("mechanic.totalServices")} value={stats.total} icon={Wrench} color="blue" />
+        <StatsCard title={t("mechanic.totalRevenue")} value={`${stats.totalRevenue} ${t("common.egp")}`} subtitle={`${t("mechanic.oil")} ${stats.oilRevenue} · ${t("mechanic.other")} ${stats.otherRevenue}`} icon={DollarSign} color="purple" />
+        <StatsCard title={t("mechanic.received")} value={`${stats.received} ${t("common.egp")}`} icon={Check} color="green" />
+        <StatsCard title={t("mechanic.unreceived")} value={`${stats.totalRevenue - stats.received} ${t("common.egp")}`} icon={DollarSign} color="red" />
       </div>
 
       <div className="card overflow-hidden">
         {loading ? (
           <div className="p-12 text-center">
             <Loader2 className="w-8 h-8 text-primary-500 animate-spin mx-auto mb-3" />
-            <p className="text-gray-500">Loading records...</p>
+            <p className="text-gray-500">{t("mechanic.loadingRecords")}</p>
           </div>
         ) : records.length === 0 ? (
           <div className="p-12 text-center">
             <Wrench className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">No mechanic records for this day</p>
+            <p className="text-gray-500">{t("mechanic.noRecords")}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="table">
               <thead>
                 <tr>
-                  <th>Time</th>
-                  <th>Plate</th>
-                  <th>Car Type</th>
-                  <th>Category</th>
-                  <th>Service</th>
-                  <th>Details</th>
-                  <th>Total</th>
-                  <th>Payment</th>
-                  <th className="text-center">Received</th>
-                  <th className="text-right">Actions</th>
+                  <th>{t("mechanic.time")}</th>
+                  <th>{t("mechanic.plate")}</th>
+                  <th>{t("mechanic.carType")}</th>
+                  <th>{t("mechanic.category")}</th>
+                  <th>{t("mechanic.service")}</th>
+                  <th>{t("mechanic.details")}</th>
+                  <th>{t("common.total")}</th>
+                  <th>{t("mechanic.payment")}</th>
+                  <th className="text-center">{t("table.received")}</th>
+                  <th className="text-end">{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -238,15 +236,15 @@ export default function MechanicPage() {
                     <td className="text-gray-600 text-sm">
                       {record.category === "OIL_SERVICE" ? (
                         <div>
-                          <div>{formatOilType(record.oilType)}: {record.oilPrice} EGP</div>
-                          <div>Labor: {record.laborCost} EGP</div>
-                          {record.filterPrice > 0 && <div>Filter: {record.filterPrice} EGP</div>}
+                          <div>{formatOilType(record.oilType)}: {record.oilPrice} {t("common.egp")}</div>
+                          <div>{t("mechanic.labor")}: {record.laborCost} {t("common.egp")}</div>
+                          {record.filterPrice > 0 && <div>{t("mechanic.filter")}: {record.filterPrice} {t("common.egp")}</div>}
                         </div>
                       ) : (
-                        <div>{record.servicePrice} EGP</div>
+                        <div>{record.servicePrice} {t("common.egp")}</div>
                       )}
                     </td>
-                    <td className="font-semibold text-gray-900">{record.totalAmount} EGP</td>
+                    <td className="font-semibold text-gray-900">{record.totalAmount} {t("common.egp")}</td>
                     <td>
                       {record.paymentType && (
                         <span className={clsx(
@@ -277,7 +275,7 @@ export default function MechanicPage() {
                         )}
                       </button>
                     </td>
-                    <td className="text-right">
+                    <td className="text-end">
                       <button
                         onClick={() => handleDelete(record.id)}
                         disabled={deletingId === record.id}

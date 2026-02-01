@@ -1,294 +1,111 @@
-"use client";
+'use client';
+import Link from "next/link";
+import { useI18n } from "@/i18n/context";
+import { Car, Wrench, BarChart3, Users, ArrowRight } from "lucide-react";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { WashRecord, Worker } from "@prisma/client";
-import AddCarModal from "@/components/AddCarModal";
-import EditCarModal from "@/components/EditCarModal";
-import FinishModal from "@/components/FinishModal";
-import CancelModal from "@/components/CancelModal";
-import DeleteConfirmModal from "@/components/DeleteConfirmModal";
-import WashRecordsTable from "@/components/WashRecordsTable";
-import StatsCard from "@/components/StatsCard";
-import { Plus, FileSpreadsheet, Car, Clock, CheckCircle, DollarSign, ChevronLeft, ChevronRight, Calendar, Banknote, CreditCard, XCircle } from "lucide-react";
+const quickAccessCards = [
+  {
+    href: "/dashboard",
+    icon: Car,
+    title: "Dashboard",
+    description: "View and manage today's wash records, stats, and exports.",
+    color: "bg-red-50 text-red-600",
+  },
+  {
+    href: "/mechanic",
+    icon: Wrench,
+    title: "Mechanic",
+    description: "Track mechanic jobs and service requests.",
+    color: "bg-orange-50 text-orange-600",
+  },
+  {
+    href: "/reports",
+    icon: BarChart3,
+    title: "Reports",
+    description: "View revenue reports and business analytics.",
+    color: "bg-blue-50 text-blue-600",
+  },
+  {
+    href: "/worker-stats",
+    icon: Users,
+    title: "Workers",
+    description: "Monitor worker performance and assignments.",
+    color: "bg-green-50 text-green-600",
+  },
+];
 
-type WashRecordWithWorker = WashRecord & { worker: Worker | null };
-
-export default function DashboardPage() {
-  const [records, setRecords] = useState<WashRecordWithWorker[]>([]);
-  const [workers, setWorkers] = useState<Worker[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingRecord, setEditingRecord] = useState<WashRecordWithWorker | null>(null);
-  const [finishingRecord, setFinishingRecord] = useState<WashRecordWithWorker | null>(null);
-  const [cancellingRecord, setCancellingRecord] = useState<WashRecordWithWorker | null>(null);
-  const [deletingRecord, setDeletingRecord] = useState<WashRecordWithWorker | null>(null);
-  const [exporting, setExporting] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
-  const initialLoadDone = useRef(false);
-
-  const isToday = selectedDate === new Date().toISOString().split("T")[0];
-
-  const fetchRecords = useCallback(async (showLoading = false) => {
-    if (showLoading) setLoading(true);
-    try {
-      const response = await fetch(`/api/wash-records?date=${selectedDate}`);
-      const data = await response.json();
-      if (data.success) setRecords(data.data);
-    } catch (error) {
-      console.error("Failed to fetch records:", error);
-    } finally {
-      if (showLoading) setLoading(false);
-    }
-  }, [selectedDate]);
-
-  const fetchWorkers = useCallback(async () => {
-    try {
-      const response = await fetch("/api/workers");
-      const data = await response.json();
-      if (data.success) setWorkers(data.data);
-    } catch (error) {
-      console.error("Failed to fetch workers:", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    const loadData = async () => {
-      if (!initialLoadDone.current) {
-        setLoading(true);
-        await Promise.all([fetchRecords(), fetchWorkers()]);
-        setLoading(false);
-        initialLoadDone.current = true;
-      } else {
-        fetchRecords();
-      }
-    };
-    loadData();
-  }, [fetchRecords, fetchWorkers]);
-
-  const handleAddWorker = async (name: string): Promise<Worker> => {
-    const response = await fetch("/api/workers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
-    });
-    const data = await response.json();
-    if (data.success) {
-      setWorkers((prev) => [...prev, data.data]);
-      return data.data;
-    }
-    throw new Error(data.error);
-  };
-
-  const sendWhatsAppMessage = (phoneNumber: string) => {
-    let formattedPhone = phoneNumber.replace(/\D/g, "");
-    if (formattedPhone.startsWith("0")) {
-      formattedPhone = "2" + formattedPhone;
-    }
-    if (!formattedPhone.startsWith("20")) {
-      formattedPhone = "20" + formattedPhone;
-    }
-    const message = encodeURIComponent("Hello! Your car is ready for pickup. Thank you for choosing VRoom CarWash!");
-    window.open(`https://wa.me/${formattedPhone}?text=${message}`, "_blank");
-  };
-
-  const handleAddSuccess = (newRecord: WashRecordWithWorker) => {
-    setRecords((prev) => [newRecord, ...prev]);
-  };
-
-  const handleEditSuccess = (updatedRecord: WashRecordWithWorker) => {
-    setRecords((prev) => prev.map((r) => (r.id === updatedRecord.id ? updatedRecord : r)));
-  };
-
-  const handleFinish = (id: string) => {
-    const record = records.find((r) => r.id === id);
-    if (record) setFinishingRecord(record);
-  };
-
-  const handleFinishSuccess = (updatedRecord: WashRecordWithWorker) => {
-    setRecords((prev) => prev.map((r) => (r.id === updatedRecord.id ? updatedRecord : r)));
-    if (finishingRecord?.phoneNumber) {
-      sendWhatsAppMessage(finishingRecord.phoneNumber);
-    }
-  };
-
-  const handleCancel = (record: WashRecordWithWorker) => {
-    setCancellingRecord(record);
-  };
-
-  const handleCancelSuccess = (updatedRecord: WashRecordWithWorker) => {
-    setRecords((prev) => prev.map((r) => (r.id === updatedRecord.id ? updatedRecord : r)));
-  };
-
-  const handleDelete = (id: string) => {
-    const record = records.find((r) => r.id === id);
-    if (record) setDeletingRecord(record);
-  };
-
-  const handleDeleteSuccess = (deletedId: string) => {
-    setRecords((prev) => prev.filter((r) => r.id !== deletedId));
-  };
-
-  const handleTogglePayment = async (id: string, received: boolean) => {
-    setRecords((prev) => prev.map((r) => (r.id === id ? { ...r, paymentReceived: received } : r)));
-    try {
-      await fetch(`/api/wash-records/${id}/payment`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paymentReceived: received }),
-      });
-    } catch (error) {
-      setRecords((prev) => prev.map((r) => (r.id === id ? { ...r, paymentReceived: !received } : r)));
-      console.error("Failed to toggle payment:", error);
-    }
-  };
-
-  const handleProofUpdate = (updatedRecord: WashRecordWithWorker) => {
-    setRecords((prev) => prev.map((r) => (r.id === updatedRecord.id ? updatedRecord : r)));
-  };
-
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      const response = await fetch(`/api/export/daily?date=${selectedDate}`);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `carwash-${selectedDate}.xlsx`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Failed to export:", error);
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const navigateDate = (direction: "prev" | "next") => {
-    const date = new Date(selectedDate);
-    date.setDate(date.getDate() + (direction === "next" ? 1 : -1));
-    setSelectedDate(date.toISOString().split("T")[0]);
-  };
-
-  const goToToday = () => {
-    setSelectedDate(new Date().toISOString().split("T")[0]);
-  };
-
-  const stats = {
-    total: records.length,
-    inProgress: records.filter((r) => r.status === "IN_PROGRESS").length,
-    finished: records.filter((r) => r.status === "FINISHED").length,
-    cancelled: records.filter((r) => r.status === "CANCELLED").length,
-    revenue: records.reduce((sum, r) => sum + r.amountPaid, 0),
-    cashReceived: records
-      .filter((r) => r.paymentType === "CASH" && r.paymentReceived)
-      .reduce((sum, r) => sum + r.amountPaid, 0),
-    instapayReceived: records
-      .filter((r) => r.paymentType === "INSTAPAY" && r.paymentReceived)
-      .reduce((sum, r) => sum + r.amountPaid, 0),
-  };
-
+export default function HomePage() {
+  const { t } = useI18n();
+  const quickAccessCards = [
+    {
+      href: "/dashboard",
+      icon: Car,
+      title: t("nav.dashboard"),
+      description: t("home.dashboardDesc"),
+      color: "bg-red-50 text-red-600",
+    },
+    {
+      href: "/mechanic",
+      icon: Wrench,
+      title: t("nav.mechanic"),
+      description: t("home.mechanicDesc"),
+      color: "bg-orange-50 text-orange-600",
+    },
+    {
+      href: "/reports",
+      icon: BarChart3,
+      title: t("nav.reports"),
+      description: t("home.reportsDesc"),
+      color: "bg-blue-50 text-blue-600",
+    },
+    {
+      href: "/worker-stats",
+      icon: Users,
+      title: t("nav.workers"),
+      description: t("home.workersDesc"),
+      color: "bg-green-50 text-green-600",
+    },
+  ];
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {isToday ? "Today's Dashboard" : "Dashboard"}
-          </h1>
-          <div className="flex items-center gap-2 mt-1">
-            <button onClick={() => navigateDate("prev")} className="p-1 hover:bg-gray-100 rounded">
-              <ChevronLeft className="w-5 h-5 text-gray-500" />
-            </button>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="text-gray-600 border-none bg-transparent cursor-pointer hover:text-gray-900"
-              />
-            </div>
-            <button onClick={() => navigateDate("next")} className="p-1 hover:bg-gray-100 rounded">
-              <ChevronRight className="w-5 h-5 text-gray-500" />
-            </button>
-            {!isToday && (
-              <button onClick={goToToday} className="text-sm text-primary-600 hover:text-primary-700 font-medium ml-2">
-                Go to Today
-              </button>
-            )}
-          </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Hero */}
+      <section className="flex-1 flex flex-col items-center justify-center px-4 py-20 text-center">
+        <h1 className="text-5xl sm:text-6xl font-bold tracking-tight">
+          <span className="text-red-600">VRoom</span>{" "}
+          <span className="text-gray-900">CarWash</span>
+        </h1>
+        <p className="mt-4 text-lg sm:text-xl text-gray-500 max-w-md">
+          {t("home.subtitle")}
+        </p>
+        <Link
+          href="/dashboard"
+          className="mt-8 inline-flex items-center gap-2 rounded-lg bg-red-600 px-6 py-3 text-white font-semibold hover:bg-red-700 transition-colors"
+        >
+          {t("home.goToDashboard")}
+          <ArrowRight className="w-5 h-5" />
+        </Link>
+      </section>
+
+      {/* Quick-access cards */}
+      <section className="max-w-5xl w-full mx-auto px-4 pb-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {quickAccessCards.map((card) => (
+            <Link
+              key={card.href}
+              href={card.href}
+              className="group rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className={`inline-flex rounded-lg p-3 ${card.color}`}>
+                <card.icon className="w-6 h-6" />
+              </div>
+              <h3 className="mt-4 text-lg font-semibold text-gray-900 group-hover:text-red-600 transition-colors">
+                {card.title}
+              </h3>
+              <p className="mt-1 text-sm text-gray-500">{card.description}</p>
+            </Link>
+          ))}
         </div>
-        <div className="flex gap-2">
-          <button onClick={handleExport} disabled={exporting} className="btn btn-secondary">
-            <FileSpreadsheet className="w-4 h-4" />
-            {exporting ? "Exporting..." : "Export"}
-          </button>
-          <button onClick={() => setShowAddModal(true)} className="btn btn-primary">
-            <Plus className="w-4 h-4" />
-            Add Car
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <StatsCard title="Total Cars" value={stats.total} icon={Car} color="blue" />
-        <StatsCard title="In Progress" value={stats.inProgress} icon={Clock} color="yellow" />
-        <StatsCard title="Finished" value={stats.finished} icon={CheckCircle} color="green" />
-        <StatsCard title="Left" value={stats.cancelled} icon={XCircle} color="red" />
-        <StatsCard title="Total Revenue" value={`${stats.revenue} EGP`} icon={DollarSign} color="purple" />
-        <StatsCard title="Cash Received" value={`${stats.cashReceived} EGP`} icon={Banknote} color="green" />
-        <StatsCard title="InstaPay Received" value={`${stats.instapayReceived} EGP`} icon={CreditCard} color="blue" />
-      </div>
-
-      <WashRecordsTable
-        records={records}
-        onFinish={handleFinish}
-        onCancel={handleCancel}
-        onEdit={setEditingRecord}
-        onDelete={handleDelete}
-        onTogglePayment={handleTogglePayment}
-        onProofUpdate={handleProofUpdate}
-        loading={loading}
-      />
-
-      <AddCarModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSuccess={handleAddSuccess}
-        workers={workers}
-        onAddWorker={handleAddWorker}
-      />
-
-      {editingRecord && (
-        <EditCarModal
-          isOpen={!!editingRecord}
-          onClose={() => setEditingRecord(null)}
-          onSuccess={handleEditSuccess}
-          record={editingRecord}
-          workers={workers}
-        />
-      )}
-
-      <FinishModal
-        isOpen={!!finishingRecord}
-        onClose={() => setFinishingRecord(null)}
-        onSuccess={handleFinishSuccess}
-        record={finishingRecord}
-      />
-
-      <CancelModal
-        isOpen={!!cancellingRecord}
-        onClose={() => setCancellingRecord(null)}
-        onSuccess={handleCancelSuccess}
-        record={cancellingRecord}
-      />
-
-      <DeleteConfirmModal
-        isOpen={!!deletingRecord}
-        onClose={() => setDeletingRecord(null)}
-        onSuccess={() => handleDeleteSuccess(deletingRecord!.id)}
-        record={deletingRecord}
-      />
+      </section>
     </div>
   );
 }

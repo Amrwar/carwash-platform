@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Modal from "./Modal";
 import { MechanicRecord } from "@prisma/client";
 import { Loader2, Droplets } from "lucide-react";
+import { useI18n } from "@/i18n/context";
 
 type OilType = "SHELL_4L" | "SHELL_5L" | "CUSTOMER_OWN";
 type ServiceType = "OIL_ONLY" | "OIL_AND_FILTER";
@@ -26,23 +27,24 @@ const LABOR_COSTS: Record<ServiceType, number> = {
   OIL_AND_FILTER: 300,
 };
 
-const oilTypes: { value: OilType; label: string; price: number; color: string }[] = [
-  { value: "SHELL_4L", label: "Shell 5W-40 (4L)", price: 2200, color: "bg-blue-100 text-blue-700 border-blue-300" },
-  { value: "SHELL_5L", label: "Shell 5W-40 (5L)", price: 2700, color: "bg-purple-100 text-purple-700 border-purple-300" },
-  { value: "CUSTOMER_OWN", label: "Customer's Own Oil", price: 0, color: "bg-gray-100 text-gray-700 border-gray-300" },
-];
-
-const serviceTypes: { value: ServiceType; label: string; price: number }[] = [
-  { value: "OIL_ONLY", label: "Oil Change Only", price: 200 },
-  { value: "OIL_AND_FILTER", label: "Oil + Filter Change", price: 300 },
-];
-
-const paymentTypes: { value: PaymentType; label: string }[] = [
-  { value: "CASH", label: "Cash" },
-  { value: "INSTAPAY", label: "InstaPay" },
-];
-
 export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOilServiceModalProps) {
+  const { t } = useI18n();
+
+  const oilTypes: { value: OilType; label: string; price: number; color: string }[] = [
+    { value: "SHELL_4L", label: t("oilService.shell4l"), price: 2200, color: "bg-blue-100 text-blue-700 border-blue-300" },
+    { value: "SHELL_5L", label: t("oilService.shell5l"), price: 2700, color: "bg-purple-100 text-purple-700 border-purple-300" },
+    { value: "CUSTOMER_OWN", label: t("oilService.customerOwn"), price: 0, color: "bg-gray-100 text-gray-700 border-gray-300" },
+  ];
+
+  const serviceTypes: { value: ServiceType; label: string; price: number }[] = [
+    { value: "OIL_ONLY", label: t("oilService.oilOnly"), price: 200 },
+    { value: "OIL_AND_FILTER", label: t("oilService.oilAndFilter"), price: 300 },
+  ];
+
+  const paymentTypes: { value: PaymentType; label: string }[] = [
+    { value: "CASH", label: t("addCar.cash") },
+    { value: "INSTAPAY", label: t("addCar.instapay") },
+  ];
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     plateNumber: "",
@@ -80,12 +82,12 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.plateNumber.trim()) {
-      newErrors.plateNumber = "Plate number is required";
+      newErrors.plateNumber = t("addCar.plateRequired");
     }
     if (formData.serviceType === "OIL_AND_FILTER") {
       const filter = parseFloat(formData.filterPrice);
       if (isNaN(filter) || filter < 350 || filter > 500) {
-        newErrors.filterPrice = "Filter price must be between 350 and 500";
+        newErrors.filterPrice = t("oilService.filterPriceError");
       }
     }
     setErrors(newErrors);
@@ -132,11 +134,11 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add Oil Service" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title={t("oilService.title")} size="lg">
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="label">Plate Number *</label>
+            <label className="label">{t("oilService.plateNumber")} *</label>
             <input
               type="text"
               className="input uppercase"
@@ -148,11 +150,11 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
             {errors.plateNumber && <p className="text-sm text-red-500 mt-1">{errors.plateNumber}</p>}
           </div>
           <div>
-            <label className="label">Car Type</label>
+            <label className="label">{t("oilService.carType")}</label>
             <input
               type="text"
               className="input"
-              placeholder="e.g., Hyundai Elantra"
+              placeholder={t("addCar.carTypePlaceholder")}
               value={formData.carType}
               onChange={(e) => setFormData({ ...formData, carType: e.target.value })}
             />
@@ -160,7 +162,7 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
         </div>
 
         <div>
-          <label className="label">Oil Type *</label>
+          <label className="label">{t("oilService.oilType")} *</label>
           <div className="grid grid-cols-3 gap-2">
             {oilTypes.map((type) => (
               <button
@@ -175,7 +177,7 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
               >
                 <span className="block">{type.label}</span>
                 <span className="block text-xs opacity-75 mt-1">
-                  {type.price > 0 ? `${type.price} EGP` : "No charge"}
+                  {type.price > 0 ? `${type.price} ${t("common.egp")}` : t("oilService.noCharge")}
                 </span>
               </button>
             ))}
@@ -183,7 +185,7 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
         </div>
 
         <div>
-          <label className="label">Service Type *</label>
+          <label className="label">{t("oilService.serviceType")} *</label>
           <div className="grid grid-cols-2 gap-2">
             {serviceTypes.map((type) => (
               <button
@@ -197,7 +199,7 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
                 }`}
               >
                 <span className="block">{type.label}</span>
-                <span className="block text-xs opacity-75 mt-1">{type.price} EGP labor</span>
+                <span className="block text-xs opacity-75 mt-1">{type.price} {t("oilService.laborEgp")}</span>
               </button>
             ))}
           </div>
@@ -205,7 +207,7 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
 
         {formData.serviceType === "OIL_AND_FILTER" && (
           <div>
-            <label className="label">Oil Filter Price (350-500 EGP) *</label>
+            <label className="label">{t("oilService.filterPrice")} *</label>
             <input
               type="number"
               className="input"
@@ -220,7 +222,7 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
         )}
 
         <div>
-          <label className="label">Payment Type *</label>
+          <label className="label">{t("oilService.paymentType")} *</label>
           <div className="grid grid-cols-2 gap-2">
             {paymentTypes.map((type) => (
               <button
@@ -240,11 +242,11 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
         </div>
 
         <div>
-          <label className="label">Notes</label>
+          <label className="label">{t("common.notes")}</label>
           <textarea
             className="input resize-none"
             rows={2}
-            placeholder="Optional notes..."
+            placeholder={t("common.notes") + "..."}
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           />
@@ -252,22 +254,22 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
 
         <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-600">Oil ({oilTypes.find(o => o.value === formData.oilType)?.label})</span>
-            <span className="font-medium">{oilPrice} EGP</span>
+            <span className="text-gray-600">{t("oilService.oil")} ({oilTypes.find(o => o.value === formData.oilType)?.label})</span>
+            <span className="font-medium">{oilPrice} {t("common.egp")}</span>
           </div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-600">Labor ({formData.serviceType === "OIL_ONLY" ? "Oil only" : "Oil + Filter"})</span>
-            <span className="font-medium">{laborCost} EGP</span>
+            <span className="text-gray-600">{t("oilService.labor")} ({formData.serviceType === "OIL_ONLY" ? t("oilService.oilOnlyLabel") : t("oilService.oilFilterLabel")})</span>
+            <span className="font-medium">{laborCost} {t("common.egp")}</span>
           </div>
           {formData.serviceType === "OIL_AND_FILTER" && (
             <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-600">Oil Filter</span>
-              <span className="font-medium">{filterPrice} EGP</span>
+              <span className="text-gray-600">{t("oilService.oilFilter")}</span>
+              <span className="font-medium">{filterPrice} {t("common.egp")}</span>
             </div>
           )}
           <div className="flex items-center justify-between pt-2 border-t border-gray-300">
-            <span className="font-semibold text-gray-900">Total</span>
-            <span className="font-bold text-lg text-red-600">{totalAmount} EGP</span>
+            <span className="font-semibold text-gray-900">{t("common.total")}</span>
+            <span className="font-bold text-lg text-red-600">{totalAmount} {t("common.egp")}</span>
           </div>
         </div>
 
@@ -279,18 +281,18 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
 
         <div className="flex gap-3 pt-2">
           <button type="button" onClick={onClose} className="btn btn-secondary flex-1">
-            Cancel
+            {t("common.cancel")}
           </button>
           <button type="submit" disabled={loading} className="btn btn-primary flex-1">
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Adding...
+                {t("oilService.adding")}
               </>
             ) : (
               <>
                 <Droplets className="w-4 h-4" />
-                Add Service
+                {t("oilService.addService")}
               </>
             )}
           </button>

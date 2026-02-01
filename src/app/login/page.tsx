@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Droplets, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
+import { useI18n } from '@/i18n/context';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -47,29 +49,29 @@ export default function LoginPage() {
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
               <Droplets className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Car Wash Manager</h1>
-            <p className="text-gray-500 mt-1">Enter password to continue</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t("login.title")}</h1>
+            <p className="text-gray-500 mt-1">{t("login.subtitle")}</p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="label">Password</label>
+              <label className="label">{t("login.password")}</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  className="input pl-10 pr-10"
-                  placeholder="Enter your password"
+                  className="input ps-10 pe-10"
+                  placeholder={t("login.placeholder")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoFocus
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 end-0 pe-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -95,17 +97,17 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Signing in...
+                  {t("login.signingIn")}
                 </>
               ) : (
-                'Sign In'
+                t('login.signIn')
               )}
             </button>
           </form>
         </div>
 
         <p className="text-center text-white/70 text-sm mt-6">
-          Protected area. Authorized access only.
+          {t("login.protected")}
         </p>
       </div>
     </div>

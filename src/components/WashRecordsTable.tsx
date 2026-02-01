@@ -5,6 +5,7 @@ import { WashRecord, Worker } from "@prisma/client";
 import { Search, Clock, CheckCircle, Edit2, Trash2, Loader2, Check, DollarSign, MessageCircle, ChevronLeft, ChevronRight, XCircle, Camera, Image } from "lucide-react";
 import clsx from "clsx";
 import ImageProofModal from "./ImageProofModal";
+import { useI18n } from "@/i18n/context";
 
 type WashRecordWithWorker = WashRecord & { worker: Worker | null };
 
@@ -54,6 +55,7 @@ export default function WashRecordsTable({
   const [viewingProof, setViewingProof] = useState<{ url: string; plateNumber: string } | null>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
+  const { t, locale } = useI18n();
 
   const filteredRecords = records.filter((record) => {
     const matchesSearch =
@@ -79,7 +81,7 @@ export default function WashRecordsTable({
   };
 
   const formatTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    return new Date(date).toLocaleTimeString(locale === "ar" ? "ar-EG" : "en-US", { hour: "2-digit", minute: "2-digit" });
   };
 
   const handleTogglePayment = async (id: string, currentStatus: boolean) => {
@@ -134,7 +136,7 @@ export default function WashRecordsTable({
     return (
       <div className="card p-12 text-center">
         <Loader2 className="w-8 h-8 text-primary-500 animate-spin mx-auto mb-3" />
-        <p className="text-gray-500">Loading records...</p>
+        <p className="text-gray-500">{t("table.loadingRecords")}</p>
       </div>
     );
   }
@@ -146,33 +148,33 @@ export default function WashRecordsTable({
       <div className="p-4 border-b border-gray-100 space-y-4">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search plate, car type, or phone..."
-              className="input pl-10"
+              placeholder={t("table.searchPlaceholder")}
+              className="input ps-10"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             />
           </div>
           <div className="flex gap-2">
             <select className="select" value={statusFilter} onChange={(e) => handleFilterChange(setStatusFilter, e.target.value)}>
-              <option value="ALL">All Status</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="FINISHED">Finished</option>
-              <option value="CANCELLED">Left/Cancelled</option>
+              <option value="ALL">{t("table.allStatus")}</option>
+              <option value="IN_PROGRESS">{t("table.inProgress")}</option>
+              <option value="FINISHED">{t("table.finished")}</option>
+              <option value="CANCELLED">{t("table.leftCancelled")}</option>
             </select>
             <select className="select" value={typeFilter} onChange={(e) => handleFilterChange(setTypeFilter, e.target.value)}>
-              <option value="ALL">All Types</option>
-              <option value="INNER">Inner</option>
-              <option value="OUTER">Outer</option>
-              <option value="FULL">Full</option>
-              <option value="FREE">Free</option>
+              <option value="ALL">{t("table.allTypes")}</option>
+              <option value="INNER">{t("table.inner")}</option>
+              <option value="OUTER">{t("table.outer")}</option>
+              <option value="FULL">{t("table.full")}</option>
+              <option value="FREE">{t("table.free")}</option>
             </select>
             <select className="select" value={paymentFilter} onChange={(e) => handleFilterChange(setPaymentFilter, e.target.value)}>
-              <option value="ALL">All Payments</option>
-              <option value="RECEIVED">Received</option>
-              <option value="PENDING">Pending</option>
+              <option value="ALL">{t("table.allPayments")}</option>
+              <option value="RECEIVED">{t("table.receivedFilter")}</option>
+              <option value="PENDING">{t("table.pending")}</option>
             </select>
           </div>
         </div>
@@ -180,7 +182,7 @@ export default function WashRecordsTable({
 
       {filteredRecords.length === 0 ? (
         <div className="p-12 text-center">
-          <p className="text-gray-500">No records found</p>
+          <p className="text-gray-500">{t("table.noRecords")}</p>
         </div>
       ) : (
         <>
@@ -188,18 +190,18 @@ export default function WashRecordsTable({
             <table className="table">
               <thead>
                 <tr>
-                  <th>Plate</th>
-                  <th>Car Type</th>
-                  <th>Phone</th>
-                  <th>Type</th>
-                  <th>Worker</th>
-                  <th>Time</th>
-                  <th>Payment</th>
-                  <th>Amount</th>
-                  <th className="text-center">Proof</th>
-                  <th className="text-center">Received</th>
-                  <th>Status</th>
-                  <th className="text-right">Actions</th>
+                  <th>{t("table.plate")}</th>
+                  <th>{t("table.carType")}</th>
+                  <th>{t("table.phone")}</th>
+                  <th>{t("table.type")}</th>
+                  <th>{t("table.worker")}</th>
+                  <th>{t("table.time")}</th>
+                  <th>{t("table.payment")}</th>
+                  <th>{t("table.amount")}</th>
+                  <th className="text-center">{t("table.proof")}</th>
+                  <th className="text-center">{t("table.received")}</th>
+                  <th>{t("table.status")}</th>
+                  <th className="text-end">{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -207,7 +209,7 @@ export default function WashRecordsTable({
                   <tr key={record.id} className={clsx("animate-fade-in", record.status === "CANCELLED" && "bg-red-50")}>
                     <td className="font-medium text-gray-900">
                       <span className="flex items-center gap-2">
-                        {record.status === "CANCELLED" && <span title="Left without completing"><XCircle className="w-4 h-4 text-red-500" /></span>}
+                        {record.status === "CANCELLED" && <span title={t("table.left")}><XCircle className="w-4 h-4 text-red-500" /></span>}
                         {record.plateNumber}
                       </span>
                     </td>
@@ -229,8 +231,8 @@ export default function WashRecordsTable({
                       ) : "-"}
                     </td>
                     <td className="text-gray-900">
-                      {record.amountPaid > 0 ? `${record.amountPaid} EGP` : "-"}
-                      {record.tipAmount > 0 && <span className="text-green-600 text-xs ml-1">(+{record.tipAmount})</span>}
+                      {record.amountPaid > 0 ? `${record.amountPaid} ${t("common.egp")}` : "-"}
+                      {record.tipAmount > 0 && <span className="text-green-600 text-xs ms-1">(+{record.tipAmount})</span>}
                     </td>
                     <td className="text-center">
                       {record.paymentType === "INSTAPAY" && (
@@ -239,7 +241,7 @@ export default function WashRecordsTable({
                             <button
                               onClick={() => setViewingProof({ url: record.instapayProof!, plateNumber: record.plateNumber })}
                               className="w-8 h-8 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center mx-auto"
-                              title="View proof"
+                              title={t("table.viewProof")}
                             >
                               <Image className="w-4 h-4" />
                             </button>
@@ -248,7 +250,7 @@ export default function WashRecordsTable({
                               onClick={() => handleCameraClick(record.id)}
                               disabled={uploadingProof === record.id}
                               className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 hover:bg-amber-200 flex items-center justify-center mx-auto"
-                              title="Take photo of proof"
+                              title={t("table.takePhoto")}
                             >
                               {uploadingProof === record.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
                             </button>
@@ -265,29 +267,29 @@ export default function WashRecordsTable({
                             "w-8 h-8 rounded-full flex items-center justify-center transition-all",
                             record.paymentReceived ? "bg-green-100 text-green-600 hover:bg-green-200" : "bg-gray-100 text-gray-400 hover:bg-gray-200"
                           )}
-                          title={record.paymentReceived ? "Payment received" : "Mark as received"}
+                          title={record.paymentReceived ? t("table.paymentReceived") : t("table.markReceived")}
                         >
                           {togglingPayment === record.id ? <Loader2 className="w-4 h-4 animate-spin" /> : record.paymentReceived ? <Check className="w-4 h-4" /> : <DollarSign className="w-4 h-4" />}
                         </button>
                       )}
                     </td>
-                    <td><span className={`badge ${statusColors[record.status]}`}>{record.status === "IN_PROGRESS" ? "In Progress" : record.status === "FINISHED" ? "Finished" : "Left"}</span></td>
+                    <td><span className={`badge ${statusColors[record.status]}`}>{record.status === "IN_PROGRESS" ? t("table.inProgress") : record.status === "FINISHED" ? t("table.finished") : t("table.left")}</span></td>
                     <td>
                       <div className="flex items-center justify-end gap-1">
                         {record.status === "IN_PROGRESS" && (
                           <>
-                            <button onClick={() => onFinish(record.id, record.phoneNumber)} className="btn btn-sm btn-ghost text-green-600 hover:bg-green-50" title="Finish">
+                            <button onClick={() => onFinish(record.id, record.phoneNumber)} className="btn btn-sm btn-ghost text-green-600 hover:bg-green-50" title={t("finish.finish")}>
                               <CheckCircle className="w-4 h-4" />
                             </button>
-                            <button onClick={() => onCancel(record)} className="btn btn-sm btn-ghost text-amber-600 hover:bg-amber-50" title="Mark as Left">
+                            <button onClick={() => onCancel(record)} className="btn btn-sm btn-ghost text-amber-600 hover:bg-amber-50" title={t("table.markAsLeft")}>
                               <XCircle className="w-4 h-4" />
                             </button>
                           </>
                         )}
-                        <button onClick={() => onEdit(record)} className="btn btn-sm btn-ghost text-blue-600 hover:bg-blue-50" title="Edit">
+                        <button onClick={() => onEdit(record)} className="btn btn-sm btn-ghost text-blue-600 hover:bg-blue-50" title={t("editCar.title")}>
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button onClick={() => onDelete(record.id)} className="btn btn-sm btn-ghost text-red-600 hover:bg-red-50" title="Delete">
+                        <button onClick={() => onDelete(record.id)} className="btn btn-sm btn-ghost text-red-600 hover:bg-red-50" title={t("common.delete")}>
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -301,7 +303,7 @@ export default function WashRecordsTable({
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
               <div className="text-sm text-gray-500">
-                Showing {startIndex + 1} to {Math.min(startIndex + ITEMS_PER_PAGE, filteredRecords.length)} of {filteredRecords.length} records
+                {t("common.showing")} {startIndex + 1} {t("common.to")} {Math.min(startIndex + ITEMS_PER_PAGE, filteredRecords.length)} {t("common.of")} {filteredRecords.length} {t("common.records")}
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">

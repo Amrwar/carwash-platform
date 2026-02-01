@@ -4,10 +4,14 @@ import type { NextRequest } from 'next/server';
 const AUTH_COOKIE_NAME = 'carwash_auth';
 const AUTH_TOKEN = 'authenticated';
 
-const publicRoutes = ['/login', '/api/auth/login'];
+const publicRoutes = ['/login', '/api/auth/login', '/api/auth/logout'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (pathname === '/') {
+    return NextResponse.next();
+  }
 
   if (publicRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.next();

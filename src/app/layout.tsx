@@ -1,10 +1,17 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Cairo } from 'next/font/google';
 import './globals.css';
 import LayoutWrapper from '@/components/LayoutWrapper';
+import { I18nProvider } from '@/i18n/context';
 
 const inter = Inter({
   subsets: ['latin'],
+  variable: '--font-inter',
+});
+
+const cairo = Cairo({
+  subsets: ['arabic'],
+  variable: '--font-cairo',
 });
 
 export const metadata: Metadata = {
@@ -18,9 +25,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} antialiased min-h-screen bg-gray-50`}>
-        <LayoutWrapper>{children}</LayoutWrapper>
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
+      <body className={`${inter.variable} ${cairo.variable} antialiased min-h-screen bg-gray-50`}>
+        <I18nProvider>
+          <LayoutWrapper>{children}</LayoutWrapper>
+        </I18nProvider>
       </body>
     </html>
   );
