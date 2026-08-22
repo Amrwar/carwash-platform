@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-
-function normalizeDigits(str: string): string {
-  return str.replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
-}
-
-function toArabicDigits(str: string): string {
-  return str.replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[parseInt(d)]);
-}
+import { normalizeDigits, toArabicDigits } from "@/lib/plates";
 
 export async function GET(request: NextRequest) {
   try {
