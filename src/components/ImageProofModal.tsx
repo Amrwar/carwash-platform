@@ -15,6 +15,9 @@ export default function ImageProofModal({ isOpen, onClose, imageUrl, plateNumber
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`${t("imageProof.title")} - ${plateNumber}`} size="lg">
       <div className="flex flex-col items-center">
+        {/* The proof is whatever URL the customer's bank app produced,
+            on a host next/image has no loader for. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={imageUrl}
           alt="InstaPay Payment Proof"

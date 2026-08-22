@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { WashRecord, Worker } from "@prisma/client";
-import { Search, Clock, CheckCircle, Edit2, Trash2, Loader2, Check, DollarSign, MessageCircle, ChevronLeft, ChevronRight, XCircle, Camera, Image } from "lucide-react";
+import { Search, Clock, CheckCircle, Edit2, Trash2, Loader2, Check, DollarSign, MessageCircle, ChevronLeft, ChevronRight, XCircle, Camera, Image as ImageIcon } from "lucide-react";
 import clsx from "clsx";
 import ImageProofModal from "./ImageProofModal";
 import { useI18n } from "@/i18n/context";
@@ -243,7 +243,7 @@ export default function WashRecordsTable({
                               className="w-8 h-8 rounded-full bg-green-100 text-green-600 hover:bg-green-200 flex items-center justify-center mx-auto"
                               title={t("table.viewProof")}
                             >
-                              <Image className="w-4 h-4" />
+                              <ImageIcon className="w-4 h-4" />
                             </button>
                           ) : (
                             <button
