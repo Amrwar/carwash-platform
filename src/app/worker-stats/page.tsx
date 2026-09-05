@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import { useI18n } from "@/i18n/context";
+import { shiftMonth, toMonthString } from "@/lib/month";
 
 interface WorkerStats {
   worker: Worker | null;
@@ -81,10 +82,7 @@ export default function WorkerStatsPage() {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<"day" | "week" | "month">("day");
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  });
+  const [selectedMonth, setSelectedMonth] = useState(() => toMonthString(new Date()));
   const [showAddWorker, setShowAddWorker] = useState(false);
   const [newWorkerName, setNewWorkerName] = useState("");
   const [newWorkerRole, setNewWorkerRole] = useState<WorkerRole>("CARWASH");
@@ -219,9 +217,7 @@ export default function WorkerStatsPage() {
   };
 
   const navigateMonth = (direction: "prev" | "next") => {
-    const [year, month] = selectedMonth.split("-").map(Number);
-    const date = new Date(year, month - 1 + (direction === "next" ? 1 : -1), 1);
-    setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
+    setSelectedMonth(shiftMonth(selectedMonth, direction === "next" ? 1 : -1));
   };
 
   const formatDateRange = () => {

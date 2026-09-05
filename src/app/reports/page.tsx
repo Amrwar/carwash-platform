@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import { useI18n } from "@/i18n/context";
+import { monthStartDate, shiftMonth, toMonthString } from "@/lib/month";
 
 type WashRecordWithWorker = WashRecord & { worker: Worker | null };
 
@@ -24,14 +25,6 @@ const washTypeBadges: Record<string, string> = {
   OUTER: "badge-green",
   FULL: "badge-purple",
   FREE: "badge-gray",
-};
-
-const formatDate = (date: Date | string, format: string) => {
-  const d = new Date(date);
-  if (format === "yyyy-MM") {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  }
-  return d.toLocaleDateString();
 };
 
 const formatMoney = (amount: number) => {
@@ -55,7 +48,7 @@ export default function ReportsPage() {
   const [records, setRecords] = useState<WashRecordWithWorker[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState(() => formatDate(new Date(), "yyyy-MM"));
+  const [selectedMonth, setSelectedMonth] = useState(() => toMonthString(new Date()));
   const [currentPage, setCurrentPage] = useState(1);
 
   const fetchRecords = useCallback(async () => {
@@ -92,15 +85,11 @@ export default function ReportsPage() {
   }, [fetchRecords, fetchWorkers]);
 
   const handlePreviousMonth = () => {
-    const date = new Date(`${selectedMonth}-01`);
-    date.setMonth(date.getMonth() - 1);
-    setSelectedMonth(formatDate(date, "yyyy-MM"));
+    setSelectedMonth(shiftMonth(selectedMonth, -1));
   };
 
   const handleNextMonth = () => {
-    const date = new Date(`${selectedMonth}-01`);
-    date.setMonth(date.getMonth() + 1);
-    setSelectedMonth(formatDate(date, "yyyy-MM"));
+    setSelectedMonth(shiftMonth(selectedMonth, 1));
   };
 
   const handleExportMonthly = () => {
@@ -152,7 +141,7 @@ export default function ReportsPage() {
     return acc;
   }, {} as Record<string, { count: number; revenue: number; instapayTips: number }>);
 
-  const monthDisplay = new Date(`${selectedMonth}-01`).toLocaleDateString(localeCode, {
+  const monthDisplay = monthStartDate(selectedMonth).toLocaleDateString(localeCode, {
     month: "long",
     year: "numeric",
   });

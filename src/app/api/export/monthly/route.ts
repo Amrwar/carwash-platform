@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCairoMonthStart, getCairoMonthEnd } from "@/lib/date-utils";
+import { monthStartDate, resolveMonthString } from "@/lib/month";
 import { generateExcelReport, getExcelFilename } from "@/lib/excel";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const now = new Date();
-    const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    const month = searchParams.get("month") || defaultMonth;
-    const [year, monthNum] = month.split("-").map(Number);
-    const targetDate = new Date(year, monthNum - 1, 1);
+    const month = resolveMonthString(searchParams.get("month"));
+    const targetDate = monthStartDate(month);
     const start = getCairoMonthStart(targetDate);
     const end = getCairoMonthEnd(targetDate);
     const records = await prisma.washRecord.findMany({

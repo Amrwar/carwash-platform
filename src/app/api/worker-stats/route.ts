@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCairoDayStart, getCairoDayEnd, getCairoMonthStart, getCairoMonthEnd } from '@/lib/date-utils';
+import { monthStartDate, resolveMonthString } from '@/lib/month';
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,9 +28,8 @@ export async function GET(request: NextRequest) {
       weekEnd.setDate(weekStart.getDate() + 6);
       endDate = getCairoDayEnd(weekEnd);
     } else if (period === 'month') {
-      const monthStr = searchParams.get('month') || `${baseDate.getFullYear()}-${String(baseDate.getMonth() + 1).padStart(2, '0')}`;
-      const [year, month] = monthStr.split('-').map(Number);
-      const monthDate = new Date(year, month - 1, 1);
+      const monthStr = resolveMonthString(searchParams.get('month'), baseDate);
+      const monthDate = monthStartDate(monthStr, baseDate);
       startDate = getCairoMonthStart(monthDate);
       endDate = getCairoMonthEnd(monthDate);
     } else {
