@@ -17,6 +17,7 @@ import {
 import clsx from "clsx";
 import { useI18n } from "@/i18n/context";
 import { monthStartDate, shiftMonth, toMonthString } from "@/lib/month";
+import { groupByWashType, groupByWorker, summarizeWashRecords } from "@/lib/wash-stats";
 
 type WashRecordWithWorker = WashRecord & { worker: Worker | null };
 
@@ -101,45 +102,21 @@ export default function ReportsPage() {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedRecords = records.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  const instapayTips = formatMoney(records
-    .filter((r) => r.paymentType === "INSTAPAY")
-    .reduce((sum, r) => sum + r.tipAmount, 0));
-
-  const totalRevenue = formatMoney(records.reduce((sum, r) => sum + r.amountPaid, 0));
-  const netRevenue = formatMoney(totalRevenue - instapayTips);
+  const totals = summarizeWashRecords(records);
 
   const stats = {
-    totalCars: records.length,
-    inProgress: records.filter((r) => r.status === "IN_PROGRESS").length,
-    finished: records.filter((r) => r.status === "FINISHED").length,
-    totalRevenue,
-    instapayTips,
-    netRevenue,
-    totalCash: formatMoney(records.filter((r) => r.paymentType === "CASH").reduce((sum, r) => sum + r.amountPaid, 0)),
-    totalInstapay: formatMoney(records.filter((r) => r.paymentType === "INSTAPAY").reduce((sum, r) => sum + r.amountPaid, 0)),
+    totalCars: totals.totalCars,
+    inProgress: totals.inProgressCars,
+    finished: totals.finishedCars,
+    totalRevenue: formatMoney(totals.totalRevenue),
+    instapayTips: formatMoney(totals.instapayTips),
+    netRevenue: formatMoney(totals.netRevenue),
+    totalCash: formatMoney(totals.cashRevenue),
+    totalInstapay: formatMoney(totals.instapayRevenue),
   };
 
-  const byWashType = records.reduce((acc, r) => {
-    if (!acc[r.washType]) {
-      acc[r.washType] = { count: 0, revenue: 0 };
-    }
-    acc[r.washType].count++;
-    acc[r.washType].revenue += r.amountPaid;
-    return acc;
-  }, {} as Record<string, { count: number; revenue: number }>);
-
-  const byWorker = records.reduce((acc, r) => {
-    const name = r.worker?.name || "Unassigned";
-    if (!acc[name]) {
-      acc[name] = { count: 0, revenue: 0, instapayTips: 0 };
-    }
-    acc[name].count++;
-    acc[name].revenue += r.amountPaid;
-    if (r.paymentType === "INSTAPAY") {
-      acc[name].instapayTips += r.tipAmount;
-    }
-    return acc;
-  }, {} as Record<string, { count: number; revenue: number; instapayTips: number }>);
+  const byWashType = groupByWashType(records);
+  const byWorker = groupByWorker(records);
 
   const monthDisplay = monthStartDate(selectedMonth).toLocaleDateString(localeCode, {
     month: "long",

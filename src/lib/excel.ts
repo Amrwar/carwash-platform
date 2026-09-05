@@ -1,61 +1,9 @@
 import ExcelJS from 'exceljs';
 import { WashRecord, Worker } from '@prisma/client';
 import { formatCairoDateTime } from './date-utils';
+import { groupByWashType, groupByWorker, summarizeWashRecords } from './wash-stats';
 
 type WashRecordWithWorker = WashRecord & { worker: Worker | null };
-
-interface SummaryData {
-  totalCars: number;
-  finishedCars: number;
-  inProgressCars: number;
-  totalRevenue: number;
-  totalTips: number;
-  totalCash: number;
-  totalInstapay: number;
-  byWashType: Record<string, { count: number; revenue: number }>;
-  byWorker: Record<string, { count: number; revenue: number; tips: number }>;
-}
-
-function calculateSummary(records: WashRecordWithWorker[]): SummaryData {
-  const summary: SummaryData = {
-    totalCars: records.length,
-    finishedCars: records.filter(r => r.status === 'FINISHED').length,
-    inProgressCars: records.filter(r => r.status === 'IN_PROGRESS').length,
-    totalRevenue: 0,
-    totalTips: 0,
-    totalCash: 0,
-    totalInstapay: 0,
-    byWashType: {},
-    byWorker: {},
-  };
-
-  for (const record of records) {
-    summary.totalRevenue += record.amountPaid;
-    summary.totalTips += record.tipAmount;
-
-    if (record.paymentType === 'CASH') {
-      summary.totalCash += record.amountPaid;
-    } else if (record.paymentType === 'INSTAPAY') {
-      summary.totalInstapay += record.amountPaid;
-    }
-
-    if (!summary.byWashType[record.washType]) {
-      summary.byWashType[record.washType] = { count: 0, revenue: 0 };
-    }
-    summary.byWashType[record.washType].count++;
-    summary.byWashType[record.washType].revenue += record.amountPaid;
-
-    const workerName = record.worker?.name || 'Unassigned';
-    if (!summary.byWorker[workerName]) {
-      summary.byWorker[workerName] = { count: 0, revenue: 0, tips: 0 };
-    }
-    summary.byWorker[workerName].count++;
-    summary.byWorker[workerName].revenue += record.amountPaid;
-    summary.byWorker[workerName].tips += record.tipAmount;
-  }
-
-  return summary;
-}
 
 export async function generateExcelReport(
   records: WashRecordWithWorker[],
@@ -128,7 +76,9 @@ export async function generateExcelReport(
 
   // Summary Sheet
   const summarySheet = workbook.addWorksheet('Summary');
-  const summary = calculateSummary(records);
+  const summary = summarizeWashRecords(records);
+  const byWashType = groupByWashType(records);
+  const byWorker = groupByWorker(records);
 
   summarySheet.columns = [
     { header: 'Metric', key: 'metric', width: 25 },
@@ -152,13 +102,13 @@ export async function generateExcelReport(
     { metric: '', value: '' },
     { metric: 'Total Revenue (EGP)', value: summary.totalRevenue },
     { metric: 'Total Tips (EGP)', value: summary.totalTips },
-    { metric: 'Total Cash (EGP)', value: summary.totalCash },
-    { metric: 'Total InstaPay (EGP)', value: summary.totalInstapay },
+    { metric: 'Total Cash (EGP)', value: summary.cashRevenue },
+    { metric: 'Total InstaPay (EGP)', value: summary.instapayRevenue },
     { metric: '', value: '' },
     { metric: '--- Breakdown by Wash Type ---', value: '' },
   ];
 
-  for (const [type, data] of Object.entries(summary.byWashType)) {
+  for (const [type, data] of Object.entries(byWashType)) {
     summaryRows.push({ metric: `${type} - Count`, value: data.count });
     summaryRows.push({ metric: `${type} - Revenue (EGP)`, value: data.revenue });
   }
@@ -166,7 +116,7 @@ export async function generateExcelReport(
   summaryRows.push({ metric: '', value: '' });
   summaryRows.push({ metric: '--- Totals by Worker ---', value: '' });
 
-  for (const [worker, data] of Object.entries(summary.byWorker)) {
+  for (const [worker, data] of Object.entries(byWorker)) {
     summaryRows.push({ metric: `${worker} - Count`, value: data.count });
     summaryRows.push({ metric: `${worker} - Revenue (EGP)`, value: data.revenue });
     summaryRows.push({ metric: `${worker} - Tips (EGP)`, value: data.tips });

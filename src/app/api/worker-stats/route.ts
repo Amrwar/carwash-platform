@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCairoDayStart, getCairoDayEnd, getCairoMonthStart, getCairoMonthEnd } from '@/lib/date-utils';
 import { monthStartDate, resolveMonthString } from '@/lib/month';
+import { countByWashType, summarizeWashRecords } from '@/lib/wash-stats';
 
 export async function GET(request: NextRequest) {
   try {
@@ -56,55 +57,11 @@ export async function GET(request: NextRequest) {
     // Calculate stats per worker
     const workerStats = workers.map((worker) => {
       const workerRecords = records.filter((r) => r.workerId === worker.id);
-      
-      const totalCars = workerRecords.length;
-      const finishedCars = workerRecords.filter((r) => r.status === 'FINISHED').length;
-      const totalRevenue = workerRecords.reduce((sum, r) => sum + r.amountPaid, 0);
-      const totalTips = workerRecords.reduce((sum, r) => sum + r.tipAmount, 0);
-      
-      // InstaPay tips = tips from records where payment was InstaPay
-      const instapayTips = workerRecords
-        .filter((r) => r.paymentType === 'INSTAPAY')
-        .reduce((sum, r) => sum + r.tipAmount, 0);
-      
-      // Cash tips
-      const cashTips = workerRecords
-        .filter((r) => r.paymentType === 'CASH')
-        .reduce((sum, r) => sum + r.tipAmount, 0);
-      
-      // Revenue breakdown
-      const cashRevenue = workerRecords
-        .filter((r) => r.paymentType === 'CASH')
-        .reduce((sum, r) => sum + r.amountPaid, 0);
-      
-      const instapayRevenue = workerRecords
-        .filter((r) => r.paymentType === 'INSTAPAY')
-        .reduce((sum, r) => sum + r.amountPaid, 0);
-      
-      // Net revenue (Revenue - InstaPay Tips that need to be given to worker)
-      const netRevenue = totalRevenue - instapayTips;
-
-      // Wash type breakdown
-      const byWashType = {
-        INNER: workerRecords.filter((r) => r.washType === 'INNER').length,
-        OUTER: workerRecords.filter((r) => r.washType === 'OUTER').length,
-        FULL: workerRecords.filter((r) => r.washType === 'FULL').length,
-        FREE: workerRecords.filter((r) => r.washType === 'FREE').length,
-      };
-
       return {
         worker,
         stats: {
-          totalCars,
-          finishedCars,
-          totalRevenue,
-          totalTips,
-          instapayTips,
-          cashTips,
-          cashRevenue,
-          instapayRevenue,
-          netRevenue,
-          byWashType,
+          ...summarizeWashRecords(workerRecords),
+          byWashType: countByWashType(workerRecords),
         },
       };
     });
@@ -114,58 +71,13 @@ export async function GET(request: NextRequest) {
     const unassignedStats = {
       worker: null,
       stats: {
-        totalCars: unassignedRecords.length,
-        finishedCars: unassignedRecords.filter((r) => r.status === 'FINISHED').length,
-        totalRevenue: unassignedRecords.reduce((sum, r) => sum + r.amountPaid, 0),
-        totalTips: unassignedRecords.reduce((sum, r) => sum + r.tipAmount, 0),
-        instapayTips: unassignedRecords
-          .filter((r) => r.paymentType === 'INSTAPAY')
-          .reduce((sum, r) => sum + r.tipAmount, 0),
-        cashTips: unassignedRecords
-          .filter((r) => r.paymentType === 'CASH')
-          .reduce((sum, r) => sum + r.tipAmount, 0),
-        cashRevenue: unassignedRecords
-          .filter((r) => r.paymentType === 'CASH')
-          .reduce((sum, r) => sum + r.amountPaid, 0),
-        instapayRevenue: unassignedRecords
-          .filter((r) => r.paymentType === 'INSTAPAY')
-          .reduce((sum, r) => sum + r.amountPaid, 0),
-        netRevenue: unassignedRecords.reduce((sum, r) => sum + r.amountPaid, 0) -
-          unassignedRecords
-            .filter((r) => r.paymentType === 'INSTAPAY')
-            .reduce((sum, r) => sum + r.tipAmount, 0),
-        byWashType: {
-          INNER: unassignedRecords.filter((r) => r.washType === 'INNER').length,
-          OUTER: unassignedRecords.filter((r) => r.washType === 'OUTER').length,
-          FULL: unassignedRecords.filter((r) => r.washType === 'FULL').length,
-          FREE: unassignedRecords.filter((r) => r.washType === 'FREE').length,
-        },
+        ...summarizeWashRecords(unassignedRecords),
+        byWashType: countByWashType(unassignedRecords),
       },
     };
 
     // Calculate totals
-    const totals = {
-      totalCars: records.length,
-      finishedCars: records.filter((r) => r.status === 'FINISHED').length,
-      totalRevenue: records.reduce((sum, r) => sum + r.amountPaid, 0),
-      totalTips: records.reduce((sum, r) => sum + r.tipAmount, 0),
-      instapayTips: records
-        .filter((r) => r.paymentType === 'INSTAPAY')
-        .reduce((sum, r) => sum + r.tipAmount, 0),
-      cashTips: records
-        .filter((r) => r.paymentType === 'CASH')
-        .reduce((sum, r) => sum + r.tipAmount, 0),
-      cashRevenue: records
-        .filter((r) => r.paymentType === 'CASH')
-        .reduce((sum, r) => sum + r.amountPaid, 0),
-      instapayRevenue: records
-        .filter((r) => r.paymentType === 'INSTAPAY')
-        .reduce((sum, r) => sum + r.amountPaid, 0),
-      netRevenue: records.reduce((sum, r) => sum + r.amountPaid, 0) -
-        records
-          .filter((r) => r.paymentType === 'INSTAPAY')
-          .reduce((sum, r) => sum + r.tipAmount, 0),
-    };
+    const totals = summarizeWashRecords(records);
 
     return NextResponse.json({
       success: true,

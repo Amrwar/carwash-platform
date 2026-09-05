@@ -11,6 +11,7 @@ import WashRecordsTable from "@/components/WashRecordsTable";
 import StatsCard from "@/components/StatsCard";
 import { Plus, FileSpreadsheet, Car, DollarSign, ChevronLeft, ChevronRight, Calendar, Banknote, CreditCard } from "lucide-react";
 import { useI18n } from "@/i18n/context";
+import { summarizeWashRecords } from "@/lib/wash-stats";
 
 type WashRecordWithWorker = WashRecord & { worker: Worker | null };
 
@@ -176,18 +177,15 @@ export default function DashboardPage() {
     setSelectedDate(new Date().toISOString().split("T")[0]);
   };
 
+  const totals = summarizeWashRecords(records);
   const stats = {
-    total: records.length,
-    inProgress: records.filter((r) => r.status === "IN_PROGRESS").length,
-    finished: records.filter((r) => r.status === "FINISHED").length,
-    cancelled: records.filter((r) => r.status === "CANCELLED").length,
-    revenue: records.reduce((sum, r) => sum + r.amountPaid, 0),
-    cashReceived: records
-      .filter((r) => r.paymentType === "CASH" && r.paymentReceived)
-      .reduce((sum, r) => sum + r.amountPaid, 0),
-    instapayReceived: records
-      .filter((r) => r.paymentType === "INSTAPAY" && r.paymentReceived)
-      .reduce((sum, r) => sum + r.amountPaid, 0),
+    total: totals.totalCars,
+    inProgress: totals.inProgressCars,
+    finished: totals.finishedCars,
+    cancelled: totals.cancelledCars,
+    revenue: totals.totalRevenue,
+    cashReceived: totals.cashReceived,
+    instapayReceived: totals.instapayReceived,
   };
 
   return (
