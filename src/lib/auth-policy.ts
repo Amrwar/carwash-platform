@@ -29,9 +29,14 @@ export function isApiPath(pathname: string): boolean {
   return pathname === '/api' || pathname.startsWith('/api/');
 }
 
-/** Whether a path is reachable signed out. */
+/**
+ * Whether a path is reachable signed out. The match is on whole path
+ * segments: /login is public, /logindetails is a different path and is not.
+ */
 export function isPublicPath(pathname: string): boolean {
-  return PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+  return PUBLIC_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
 }
 
 /**
