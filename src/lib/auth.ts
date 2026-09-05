@@ -1,12 +1,9 @@
 import { cookies } from "next/headers";
-
-const AUTH_COOKIE_NAME = "carwash_auth";
-const AUTH_TOKEN = "authenticated";
+import { AUTH_COOKIE_NAME, AUTH_TOKEN, isAuthenticatedValue } from "@/lib/auth-policy";
 
 export async function isAuthenticated(): Promise<boolean> {
   const cookieStore = await cookies();
-  const authCookie = cookieStore.get(AUTH_COOKIE_NAME);
-  return authCookie?.value === AUTH_TOKEN;
+  return isAuthenticatedValue(cookieStore.get(AUTH_COOKIE_NAME)?.value);
 }
 
 export async function setAuthCookie(): Promise<void> {
