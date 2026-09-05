@@ -142,9 +142,25 @@ export async function generateExcelReport(
   return Buffer.from(buffer);
 }
 
-export function getExcelFilename(reportType: 'daily' | 'monthly', dateStr: string): string {
-  if (reportType === 'daily') {
-    return `carwash_${dateStr}.xlsx`;
-  }
-  return `carwash_${dateStr}.xlsx`;
+/** The media type a spreadsheet is served as. */
+export const EXCEL_CONTENT_TYPE =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+/**
+ * What the downloaded workbook is called. The date reaches this straight
+ * from a query parameter and then goes into a response header, so anything
+ * that is not a plain date character is dropped rather than quoted - a
+ * quote or a newline in a header is somebody else's filename.
+ */
+export function getExcelFilename(dateStr: string): string {
+  const safeDate = dateStr.replace(/[^A-Za-z0-9_-]/g, '');
+  return `carwash_${safeDate}.xlsx`;
+}
+
+/** The headers that make a browser save the workbook rather than show it. */
+export function excelDownloadHeaders(dateStr: string): Record<string, string> {
+  return {
+    'Content-Type': EXCEL_CONTENT_TYPE,
+    'Content-Disposition': `attachment; filename="${getExcelFilename(dateStr)}"`,
+  };
 }

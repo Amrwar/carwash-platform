@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCairoMonthStart, getCairoMonthEnd } from "@/lib/date-utils";
 import { monthStartDate, resolveMonthString } from "@/lib/month";
-import { generateExcelReport, getExcelFilename } from "@/lib/excel";
+import { excelDownloadHeaders, generateExcelReport } from "@/lib/excel";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,14 +17,9 @@ export async function GET(request: NextRequest) {
       orderBy: { entryTime: "asc" },
     });
     const buffer = await generateExcelReport(records, "monthly", month);
-    const filename = getExcelFilename("monthly", month);
-    const uint8 = new Uint8Array(buffer);
-    return new Response(uint8, {
+    return new Response(new Uint8Array(buffer), {
       status: 200,
-      headers: {
-        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-      },
+      headers: excelDownloadHeaders(month),
     });
   } catch (error) {
     console.error("Error generating monthly export:", error);
