@@ -64,3 +64,43 @@ export type UpdateWashRecordInput = z.infer<typeof UpdateWashRecordSchema>;
 export type FinishWashRecordInput = z.infer<typeof FinishWashRecordSchema>;
 export type CreateWorkerInput = z.infer<typeof CreateWorkerSchema>;
 export type UpdateWorkerInput = z.infer<typeof UpdateWorkerSchema>;
+
+export const ServiceCategorySchema = z.enum(['OIL_SERVICE', 'OTHER_SERVICE']);
+export const OilTypeSchema = z.enum(['SHELL_4L', 'SHELL_5L', 'CUSTOMER_OWN']);
+export const OilServiceTypeSchema = z.enum(['OIL_ONLY', 'OIL_AND_FILTER']);
+
+/** A price as it arrives from a form - a number, or the string an input box holds. */
+const MoneyInputSchema = z.union([z.number(), z.string()]).nullable().optional();
+
+export const CreateMechanicRecordSchema = z.object({
+  plateNumber: z.string().trim().min(1, 'Plate number is required'),
+  carType: z.string().nullable().optional(),
+  phoneNumber: z.string().nullable().optional(),
+  category: ServiceCategorySchema.default('OIL_SERVICE'),
+  oilType: OilTypeSchema.nullable().optional(),
+  serviceType: OilServiceTypeSchema.nullable().optional(),
+  filterPrice: MoneyInputSchema,
+  serviceName: z.string().nullable().optional(),
+  servicePrice: MoneyInputSchema,
+  paymentType: PaymentTypeSchema.nullable().optional(),
+  paymentReceived: z.boolean().optional().default(false),
+  notes: z.string().nullable().optional(),
+}).refine(data => {
+  if (data.category === 'OIL_SERVICE') {
+    return Boolean(data.oilType) && Boolean(data.serviceType);
+  }
+  return true;
+}, {
+  message: 'An oil service needs an oil and a job',
+  path: ['oilType'],
+}).refine(data => {
+  if (data.category === 'OTHER_SERVICE') {
+    return Boolean(data.serviceName?.trim());
+  }
+  return true;
+}, {
+  message: 'A service name is required',
+  path: ['serviceName'],
+});
+
+export type CreateMechanicRecordInput = z.infer<typeof CreateMechanicRecordSchema>;

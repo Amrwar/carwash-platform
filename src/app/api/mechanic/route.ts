@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { ZodError } from "zod";
 import { getCairoDayStart, getCairoDayEnd, getCairoMonthStart, getCairoMonthEnd } from "@/lib/date-utils";
-import { normalizeDigits } from "@/lib/plates";
+import { buildMechanicRecordInput } from "@/lib/mechanic-record";
 
 export async function GET(request: NextRequest) {
   try {
@@ -48,25 +49,19 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  let data;
   try {
-    const body = await request.json();
+    data = buildMechanicRecordInput(await request.json());
+  } catch (error) {
+    const message =
+      error instanceof ZodError
+        ? error.errors[0]?.message ?? "Invalid mechanic record"
+        : "Invalid mechanic record";
+    return NextResponse.json({ success: false, error: message }, { status: 400 });
+  }
 
-    const record = await prisma.mechanicRecord.create({
-      data: {
-        plateNumber: normalizeDigits(body.plateNumber.trim()).toUpperCase(),
-        carType: body.carType || null,
-        phoneNumber: body.phoneNumber || null,
-        oilType: body.oilType || null,
-        oilPrice: body.oilPrice || 0,
-        serviceType: body.serviceType,
-        laborCost: body.laborCost || 0,
-        filterPrice: body.filterPrice || 0,
-        totalAmount: body.totalAmount || 0,
-        paymentType: body.paymentType || null,
-        paymentReceived: body.paymentReceived || false,
-        notes: body.notes || null,
-      },
-    });
+  try {
+    const record = await prisma.mechanicRecord.create({ data });
 
     return NextResponse.json({ success: true, data: record }, { status: 201 });
   } catch (error) {
