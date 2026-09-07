@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { ZodError } from "zod";
+import { validationMessage } from "@/lib/request-errors";
 import { buildMechanicRecordInput } from "@/lib/mechanic-record";
 import { resolveRecordWindow } from "@/lib/record-window";
 
@@ -37,11 +37,10 @@ export async function POST(request: NextRequest) {
   try {
     data = buildMechanicRecordInput(await request.json());
   } catch (error) {
-    const message =
-      error instanceof ZodError
-        ? error.errors[0]?.message ?? "Invalid mechanic record"
-        : "Invalid mechanic record";
-    return NextResponse.json({ success: false, error: message }, { status: 400 });
+    return NextResponse.json(
+      { success: false, error: validationMessage(error, "Invalid mechanic record") },
+      { status: 400 }
+    );
   }
 
   try {

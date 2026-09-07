@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ZodError } from "zod";
 import prisma from "@/lib/prisma";
+import { validationMessage } from "@/lib/request-errors";
 import { CreateWorkerSchema } from "@/lib/validations";
 
 export async function GET() {
@@ -24,11 +24,10 @@ export async function POST(request: NextRequest) {
   try {
     data = CreateWorkerSchema.parse(await request.json());
   } catch (error) {
-    const message =
-      error instanceof ZodError
-        ? error.errors[0]?.message ?? "Invalid worker"
-        : "Invalid worker";
-    return NextResponse.json({ success: false, error: message }, { status: 400 });
+    return NextResponse.json(
+      { success: false, error: validationMessage(error, "Invalid worker") },
+      { status: 400 }
+    );
   }
 
   try {
