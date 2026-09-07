@@ -44,8 +44,11 @@ export interface DayParts {
 
 const DAY_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
-/** Midday UTC on a calendar day - far enough from either edge that no
- * timezone between Honolulu and Auckland reads it as a different date. */
+/**
+ * Midday UTC on a calendar day. Cairo runs ahead of UTC, so any hour of
+ * the UTC day would land on the right Cairo date; midday is a margin, so
+ * this keeps working if the shop's timezone ever moves behind UTC.
+ */
 function utcMidday(year: number, month: number, day: number): Date {
   const date = new Date(0);
   date.setUTCFullYear(year, month - 1, day);
