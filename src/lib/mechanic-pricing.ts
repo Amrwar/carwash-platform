@@ -76,11 +76,12 @@ export function toAmount(value: unknown): number {
 
 /**
  * Whether a typed filter price is one we will bill. Outside the bounds is a
- * mistake worth stopping at the form, not a cheap or dear filter.
+ * mistake worth stopping at the form, not a cheap or dear filter. An empty
+ * box reads as zero and so falls below the lower bound, which is the answer
+ * we want anyway.
  */
 export function isFilterPriceValid(value: unknown): boolean {
   const amount = typeof value === 'string' ? Number(value.trim()) : Number(value);
-  if (typeof value === 'string' && value.trim() === '') return false;
   if (!Number.isFinite(amount)) return false;
   return amount >= FILTER_PRICE_MIN && amount <= FILTER_PRICE_MAX;
 }
