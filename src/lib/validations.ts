@@ -50,13 +50,23 @@ export const FinishWashRecordSchema = z.object({
   tipAmount: z.number().min(0).optional(),
 });
 
+export const WorkerRoleSchema = z.enum(['CARWASH', 'MECHANIC', 'BOTH']);
+
 export const CreateWorkerSchema = z.object({
   name: z.string().min(1, 'Worker name is required').transform(v => v.trim()),
+  role: WorkerRoleSchema.default('CARWASH'),
+}).refine(data => data.name.length > 0, {
+  message: 'Worker name is required',
+  path: ['name'],
 });
 
 export const UpdateWorkerSchema = z.object({
   name: z.string().min(1).transform(v => v.trim()).optional(),
+  role: WorkerRoleSchema.optional(),
   isActive: z.boolean().optional(),
+}).refine(data => data.name === undefined || data.name.length > 0, {
+  message: 'Worker name is required',
+  path: ['name'],
 });
 
 export type CreateWashRecordInput = z.infer<typeof CreateWashRecordSchema>;

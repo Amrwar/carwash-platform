@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ZodError } from "zod";
 import prisma from "@/lib/prisma";
+import { CreateWorkerSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -18,15 +20,20 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  let data;
   try {
-    const body = await request.json();
+    data = CreateWorkerSchema.parse(await request.json());
+  } catch (error) {
+    const message =
+      error instanceof ZodError
+        ? error.errors[0]?.message ?? "Invalid worker"
+        : "Invalid worker";
+    return NextResponse.json({ success: false, error: message }, { status: 400 });
+  }
 
+  try {
     const worker = await prisma.worker.create({
-      data: {
-        name: body.name.trim(),
-        role: body.role || "CARWASH",
-        isActive: true,
-      },
+      data: { ...data, isActive: true },
     });
 
     return NextResponse.json({ success: true, data: worker }, { status: 201 });

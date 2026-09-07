@@ -1,17 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ZodError } from "zod";
 import prisma from "@/lib/prisma";
+import { UpdateWorkerSchema } from "@/lib/validations";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let data;
+  try {
+    data = UpdateWorkerSchema.parse(await request.json());
+  } catch (error) {
+    const message =
+      error instanceof ZodError
+        ? error.errors[0]?.message ?? "Invalid worker"
+        : "Invalid worker";
+    return NextResponse.json({ success: false, error: message }, { status: 400 });
+  }
+
   try {
     const { id } = await params;
-    const body = await request.json();
 
     const worker = await prisma.worker.update({
       where: { id },
-      data: body,
+      data,
     });
 
     return NextResponse.json({ success: true, data: worker });
