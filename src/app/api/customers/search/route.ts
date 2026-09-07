@@ -1,28 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { normalizeDigits, toArabicDigits } from "@/lib/plates";
+import { isSearchablePlateQuery, summarizeCustomerHistory } from "@/lib/customer-history";
+import { plateSpellings } from "@/lib/plates";
+
+/** How many recent washes the customer card is worked out from. */
+const SEARCH_LIMIT = 20;
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const plate = searchParams.get("plate");
 
-    if (!plate || plate.length < 2) {
+    if (!isSearchablePlateQuery(plate)) {
       return NextResponse.json({ success: true, data: null });
     }
 
-    const normalizedPlate = normalizeDigits(plate).toUpperCase();
-    const arabicPlate = toArabicDigits(normalizedPlate);
-
     const records = await prisma.washRecord.findMany({
       where: {
-        OR: [
-          { plateNumber: { contains: normalizedPlate } },
-          { plateNumber: { contains: arabicPlate } },
-        ],
+        OR: plateSpellings(plate!).map((spelling) => ({
+          plateNumber: { contains: spelling },
+        })),
       },
       orderBy: { entryTime: "desc" },
-      take: 20,
+      take: SEARCH_LIMIT,
       select: {
         id: true,
         plateNumber: true,
@@ -35,47 +35,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    if (records.length === 0) {
-      return NextResponse.json({ success: true, data: null });
-    }
-
-    // Group by plate number
-    const plateGroups = records.reduce((acc, record) => {
-      if (!acc[record.plateNumber]) {
-        acc[record.plateNumber] = [];
-      }
-      acc[record.plateNumber].push(record);
-      return acc;
-    }, {} as Record<string, typeof records>);
-
-    // Get customer info for the most matching plate
-    const exactMatch = Object.keys(plateGroups).find(p => p === normalizedPlate);
-    const bestMatch = exactMatch || Object.keys(plateGroups)[0];
-    const customerRecords = plateGroups[bestMatch];
-
-    const totalVisits = customerRecords.length;
-    const totalSpent = customerRecords.reduce((sum, r) => sum + r.amountPaid, 0);
-    const lastVisit = customerRecords[0];
-    const favoriteWashType = customerRecords
-      .map(r => r.washType)
-      .sort((a, b) =>
-        customerRecords.filter(r => r.washType === b).length -
-        customerRecords.filter(r => r.washType === a).length
-      )[0];
-
     return NextResponse.json({
       success: true,
-      data: {
-        plateNumber: bestMatch,
-        carType: lastVisit.carType,
-        phoneNumber: lastVisit.phoneNumber,
-        totalVisits,
-        totalSpent,
-        lastVisit: lastVisit.entryTime,
-        favoriteWashType,
-        isVIP: totalVisits >= 5,
-        recentVisits: customerRecords.slice(0, 5),
-      },
+      data: summarizeCustomerHistory(records, plate!),
     });
   } catch (error) {
     console.error("Error searching customer:", error);
