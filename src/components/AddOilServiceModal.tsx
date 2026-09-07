@@ -5,9 +5,19 @@ import Modal from "./Modal";
 import { MechanicRecord } from "@prisma/client";
 import { Loader2, Droplets } from "lucide-react";
 import { useI18n } from "@/i18n/context";
+import {
+  DEFAULT_FILTER_PRICE,
+  FILTER_PRICE_MAX,
+  FILTER_PRICE_MIN,
+  LABOR_COSTS,
+  OIL_PRICES,
+  OilServiceType,
+  OilType,
+  isFilterPriceValid,
+  oilServiceCharge,
+} from "@/lib/mechanic-pricing";
 
-type OilType = "SHELL_4L" | "SHELL_5L" | "CUSTOMER_OWN";
-type ServiceType = "OIL_ONLY" | "OIL_AND_FILTER";
+type ServiceType = OilServiceType;
 type PaymentType = "CASH" | "INSTAPAY";
 
 interface AddOilServiceModalProps {
@@ -16,29 +26,18 @@ interface AddOilServiceModalProps {
   onSuccess: (record: MechanicRecord) => void;
 }
 
-const OIL_PRICES: Record<OilType, number> = {
-  SHELL_4L: 2200,
-  SHELL_5L: 2700,
-  CUSTOMER_OWN: 0,
-};
-
-const LABOR_COSTS: Record<ServiceType, number> = {
-  OIL_ONLY: 200,
-  OIL_AND_FILTER: 300,
-};
-
 export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOilServiceModalProps) {
   const { t } = useI18n();
 
   const oilTypes: { value: OilType; label: string; price: number; color: string }[] = [
-    { value: "SHELL_4L", label: t("oilService.shell4l"), price: 2200, color: "bg-blue-100 text-blue-700 border-blue-300" },
-    { value: "SHELL_5L", label: t("oilService.shell5l"), price: 2700, color: "bg-purple-100 text-purple-700 border-purple-300" },
-    { value: "CUSTOMER_OWN", label: t("oilService.customerOwn"), price: 0, color: "bg-gray-100 text-gray-700 border-gray-300" },
+    { value: "SHELL_4L", label: t("oilService.shell4l"), price: OIL_PRICES.SHELL_4L, color: "bg-blue-100 text-blue-700 border-blue-300" },
+    { value: "SHELL_5L", label: t("oilService.shell5l"), price: OIL_PRICES.SHELL_5L, color: "bg-purple-100 text-purple-700 border-purple-300" },
+    { value: "CUSTOMER_OWN", label: t("oilService.customerOwn"), price: OIL_PRICES.CUSTOMER_OWN, color: "bg-gray-100 text-gray-700 border-gray-300" },
   ];
 
   const serviceTypes: { value: ServiceType; label: string; price: number }[] = [
-    { value: "OIL_ONLY", label: t("oilService.oilOnly"), price: 200 },
-    { value: "OIL_AND_FILTER", label: t("oilService.oilAndFilter"), price: 300 },
+    { value: "OIL_ONLY", label: t("oilService.oilOnly"), price: LABOR_COSTS.OIL_ONLY },
+    { value: "OIL_AND_FILTER", label: t("oilService.oilAndFilter"), price: LABOR_COSTS.OIL_AND_FILTER },
   ];
 
   const paymentTypes: { value: PaymentType; label: string }[] = [
@@ -52,7 +51,7 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
     phoneNumber: "",
     oilType: "SHELL_4L" as OilType,
     serviceType: "OIL_AND_FILTER" as ServiceType,
-    filterPrice: "350",
+    filterPrice: String(DEFAULT_FILTER_PRICE),
     paymentType: "CASH" as PaymentType,
     notes: "",
   });
@@ -66,7 +65,7 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
         phoneNumber: "",
         oilType: "SHELL_4L",
         serviceType: "OIL_AND_FILTER",
-        filterPrice: "350",
+        filterPrice: String(DEFAULT_FILTER_PRICE),
         paymentType: "CASH",
         notes: "",
       });
@@ -74,21 +73,19 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
     }
   }, [isOpen]);
 
-  const oilPrice = OIL_PRICES[formData.oilType];
-  const laborCost = LABOR_COSTS[formData.serviceType];
-  const filterPrice = formData.serviceType === "OIL_AND_FILTER" ? parseFloat(formData.filterPrice) || 0 : 0;
-  const totalAmount = oilPrice + laborCost + filterPrice;
+  const { oilPrice, laborCost, filterPrice, totalAmount } = oilServiceCharge(
+    formData.oilType,
+    formData.serviceType,
+    formData.filterPrice
+  );
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.plateNumber.trim()) {
       newErrors.plateNumber = t("addCar.plateRequired");
     }
-    if (formData.serviceType === "OIL_AND_FILTER") {
-      const filter = parseFloat(formData.filterPrice);
-      if (isNaN(filter) || filter < 350 || filter > 500) {
-        newErrors.filterPrice = t("oilService.filterPriceError");
-      }
+    if (formData.serviceType === "OIL_AND_FILTER" && !isFilterPriceValid(formData.filterPrice)) {
+      newErrors.filterPrice = t("oilService.filterPriceError");
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -211,9 +208,9 @@ export default function AddOilServiceModal({ isOpen, onClose, onSuccess }: AddOi
             <input
               type="number"
               className="input"
-              placeholder="350"
-              min="350"
-              max="500"
+              placeholder={String(DEFAULT_FILTER_PRICE)}
+              min={FILTER_PRICE_MIN}
+              max={FILTER_PRICE_MAX}
               value={formData.filterPrice}
               onChange={(e) => setFormData({ ...formData, filterPrice: e.target.value })}
             />
