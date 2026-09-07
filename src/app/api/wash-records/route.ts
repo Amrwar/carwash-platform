@@ -1,31 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getCairoDayStart, getCairoDayEnd, getCairoMonthStart, getCairoMonthEnd, formatCairoDate } from "@/lib/date-utils";
-import { normalizeDigits } from "@/lib/plates";
+import { normalizePlate } from "@/lib/plates";
+import { resolveRecordWindow } from "@/lib/record-window";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const date = searchParams.get("date");
-    const month = searchParams.get("month");
-
-    let start: Date;
-    let end: Date;
-
-    if (date) {
-      const targetDate = new Date(date);
-      start = getCairoDayStart(targetDate);
-      end = getCairoDayEnd(targetDate);
-    } else if (month) {
-      const [year, monthNum] = month.split("-").map(Number);
-      const targetDate = new Date(year, monthNum - 1, 1);
-      start = getCairoMonthStart(targetDate);
-      end = getCairoMonthEnd(targetDate);
-    } else {
-      const today = new Date();
-      start = getCairoDayStart(today);
-      end = getCairoDayEnd(today);
-    }
+    const { start, end } = resolveRecordWindow({
+      date: searchParams.get("date"),
+      month: searchParams.get("month"),
+    });
 
     const records = await prisma.washRecord.findMany({
       where: {
@@ -53,7 +37,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const recordData: Record<string, unknown> = {
-      plateNumber: normalizeDigits(body.plateNumber.trim()).toUpperCase(),
+      plateNumber: normalizePlate(body.plateNumber),
       carType: body.carType || null,
       phoneNumber: body.phoneNumber || null,
       washType: body.washType,

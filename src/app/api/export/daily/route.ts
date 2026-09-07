@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getCairoDayStart, getCairoDayEnd, formatCairoDate } from "@/lib/date-utils";
 import { excelDownloadHeaders, generateExcelReport } from "@/lib/excel";
+import { cairoDayWindow, resolveDayString } from "@/lib/record-window";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const dateParam = searchParams.get("date");
-    const date = dateParam || formatCairoDate(new Date());
-    const targetDate = dateParam ? new Date(dateParam) : new Date();
-    const start = getCairoDayStart(targetDate);
-    const end = getCairoDayEnd(targetDate);
+    const date = resolveDayString(searchParams.get("date"));
+    const { start, end } = cairoDayWindow(date);
     const records = await prisma.washRecord.findMany({
       where: { entryTime: { gte: start, lte: end } },
       include: { worker: true },
