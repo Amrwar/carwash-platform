@@ -20,6 +20,7 @@ import clsx from "clsx";
 import { useI18n } from "@/i18n/context";
 import AddOilServiceModal from "@/components/AddOilServiceModal";
 import AddOtherServiceModal from "@/components/AddOtherServiceModal";
+import { summarizeMechanicRecords } from "@/lib/mechanic-stats";
 
 export default function MechanicPage() {
   const { t, locale } = useI18n();
@@ -113,18 +114,7 @@ export default function MechanicPage() {
     return type === "OIL_ONLY" ? t("mechanic.oilOnly") : t("mechanic.oilAndFilter");
   };
 
-  const oilRecords = records.filter((r) => r.category === "OIL_SERVICE");
-  const otherRecords = records.filter((r) => r.category === "OTHER_SERVICE");
-
-  const stats = {
-    total: records.length,
-    totalRevenue: records.reduce((sum, r) => sum + r.totalAmount, 0),
-    oilServices: oilRecords.length,
-    oilRevenue: oilRecords.reduce((sum, r) => sum + r.totalAmount, 0),
-    otherServices: otherRecords.length,
-    otherRevenue: otherRecords.reduce((sum, r) => sum + r.totalAmount, 0),
-    received: records.filter((r) => r.paymentReceived).reduce((sum, r) => sum + r.totalAmount, 0),
-  };
+  const stats = summarizeMechanicRecords(records);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -176,7 +166,7 @@ export default function MechanicPage() {
         <StatsCard title={t("mechanic.totalServices")} value={stats.total} icon={Wrench} color="blue" />
         <StatsCard title={t("mechanic.totalRevenue")} value={`${stats.totalRevenue} ${t("common.egp")}`} subtitle={`${t("mechanic.oil")} ${stats.oilRevenue} · ${t("mechanic.other")} ${stats.otherRevenue}`} icon={DollarSign} color="purple" />
         <StatsCard title={t("mechanic.received")} value={`${stats.received} ${t("common.egp")}`} icon={Check} color="green" />
-        <StatsCard title={t("mechanic.unreceived")} value={`${stats.totalRevenue - stats.received} ${t("common.egp")}`} icon={DollarSign} color="red" />
+        <StatsCard title={t("mechanic.unreceived")} value={`${stats.outstanding} ${t("common.egp")}`} icon={DollarSign} color="red" />
       </div>
 
       <div className="card overflow-hidden">
