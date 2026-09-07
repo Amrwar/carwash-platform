@@ -1,27 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { buildCancellationUpdate } from "@/lib/cancellation";
+import { validationMessage } from "@/lib/request-errors";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let data;
+  try {
+    data = buildCancellationUpdate(await request.json().catch(() => ({})));
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: validationMessage(error, "Invalid cancellation") },
+      { status: 400 }
+    );
+  }
+
   try {
     const { id } = await params;
-    const body = await request.json();
-    const { amountPaid, paymentType, notes } = body;
-
-    const paidAmount = amountPaid ?? 0;
 
     const record = await prisma.washRecord.update({
       where: { id },
-      data: {
-        status: "CANCELLED",
-        finishTime: new Date(),
-        amountPaid: paidAmount,
-        paymentType: paidAmount > 0 ? paymentType : null,
-        paymentReceived: paidAmount > 0,
-        notes: notes || null,
-      },
+      data,
       include: { worker: true },
     });
 

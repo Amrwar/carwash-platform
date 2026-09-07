@@ -114,3 +114,19 @@ export const CreateMechanicRecordSchema = z.object({
 });
 
 export type CreateMechanicRecordInput = z.infer<typeof CreateMechanicRecordSchema>;
+
+export const CancelWashRecordSchema = z.object({
+  amountPaid: z.number().min(0, 'Amount must be 0 or positive').optional(),
+  paymentType: PaymentTypeSchema.nullable().optional(),
+  notes: z.string().nullable().optional(),
+}).refine(data => {
+  if ((data.amountPaid ?? 0) > 0) {
+    return data.paymentType !== null && data.paymentType !== undefined;
+  }
+  return true;
+}, {
+  message: 'Payment type is required when money was taken',
+  path: ['paymentType'],
+});
+
+export type CancelWashRecordInput = z.infer<typeof CancelWashRecordSchema>;
